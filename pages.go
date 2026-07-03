@@ -90,6 +90,20 @@ pre.json {
   overflow-x: auto; margin-top: 12px; color: var(--text);
 }
 footer { text-align: center; color: var(--text-dim); font-size: 12px; padding: 24px; }
+.features-head {
+  margin-top: 44px; margin-bottom: 14px; font-size: 12px; letter-spacing: 1.4px;
+  text-transform: uppercase; color: var(--accent); font-weight: 700;
+}
+.features { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.feature {
+  background: var(--bg-panel); border: 1px solid var(--border);
+  border-radius: 12px; padding: 18px 18px 16px;
+}
+.feature .ico { display: block; font-size: 20px; margin-bottom: 10px; }
+.feature h3 { font-size: 15px; margin-bottom: 6px; }
+.feature p { font-size: 13px; color: var(--text-dim); line-height: 1.55; }
+.features-link { display: block; margin-top: 16px; font-size: 13px; color: var(--accent); text-decoration: none; }
+.features-link:hover { text-decoration: underline; }
 `
 
 // Nav links are server-driven: nothing but the language switch shows before
@@ -124,6 +138,31 @@ var homeTmpl = mustPage("home", `
       <div id="status" class="status"></div>
     </form>
   </div>
+
+  <div class="features-head" data-i18n="featHead">&iquest;Por qu&eacute; Relampo?</div>
+  <div class="features">
+    <div class="feature">
+      <span class="ico">&#9889;</span>
+      <h3 data-i18n="feat1t">Correlaci&oacute;n autom&aacute;tica completa</h3>
+      <p data-i18n="feat1d">Relampo detecta y correlaciona los valores din&aacute;micos por vos al grabar: menos scripting manual, pruebas listas antes.</p>
+    </div>
+    <div class="feature">
+      <span class="ico">&#128200;</span>
+      <h3 data-i18n="feat2t">500 usuarios virtuales, 4 nodos</h3>
+      <p data-i18n="feat2d">Gener&aacute; hasta 500 usuarios virtuales distribuidos en 4 nodos de carga con la integraci&oacute;n nativa de Relampo con GitHub.</p>
+    </div>
+    <div class="feature">
+      <span class="ico">&#128196;</span>
+      <h3 data-i18n="feat3t">Scripts YAML declarativos</h3>
+      <p data-i18n="feat3d">F&aacute;ciles de leer, intuitivos y versionables en Git: revis&aacute;s tus pruebas de performance como revis&aacute;s c&oacute;digo.</p>
+    </div>
+    <div class="feature">
+      <span class="ico">&#128640;</span>
+      <h3 data-i18n="feat4t">Motor de carga en Go</h3>
+      <p data-i18n="feat4d">Generaci&oacute;n de carga de alto rendimiento con la eficiencia y la concurrencia nativa de Go.</p>
+    </div>
+  </div>
+  <a class="features-link" href="https://relampo.com" target="_blank" rel="noopener" data-i18n="featLink">Conoc&eacute; m&aacute;s en relampo.com &rarr;</a>
 </main>`+footerHTML+`
 <script src="/static/app.js"></script>
 </body>`)
