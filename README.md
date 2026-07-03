@@ -14,10 +14,15 @@ borrar, máximo **5 por usuario**) y **comprar una entrada** (catálogo → rese
 gateway de pago → ticket). El catálogo de compra son exactamente los eventos creados
 por el usuario, así que el flujo típico es: **login → crear evento → comprar entrada**.
 
-Reglas de UI: los links del menú (comprar / mis eventos / salir) solo aparecen con un
-usuario logueado; "comprar" solo cuando el usuario tiene eventos creados. Tras el
-login, la primera pantalla es **Mis eventos**: si no hay ninguno, el formulario de
-crear es lo primero que se ve.
+Reglas de UI: los links del menú (comprar / mis eventos / salir) y el chip con el
+usuario logueado solo aparecen tras el login; "comprar" solo cuando el usuario tiene
+eventos. Tras el login, la primera pantalla es **Mis eventos** (crear a la izquierda,
+publicados a la derecha).
+
+**Evento de bienvenida:** todo usuario entra con un evento ya publicado —
+*Relampo Fest, Estadio del Rayo, 2026-12-31* — así puede comprar desde el primer
+momento sin crear nada. Cuenta como 1 de los 5 del límite y es editable/borrable
+como cualquier otro (la sesión siguiente lo vuelve a tener).
 
 ## Cómo correrla
 

@@ -61,7 +61,28 @@ func clientIP(r *http.Request) string {
 func pageData(s *Session, extra map[string]any) map[string]any {
 	extra["LoggedIn"] = s != nil && s.User != ""
 	extra["HasEvents"] = s != nil && s.ownedCount() > 0
+	if s != nil {
+		extra["NavUser"] = s.User
+	}
 	return extra
+}
+
+// buildEvent arma un evento con su stock de 12 asientos y rev inicial.
+func buildEvent(name, venue, date string) *Event {
+	ev := &Event{
+		ID:    "EV-" + randomUUID(),
+		Name:  name,
+		Venue: venue,
+		Date:  date,
+		Owned: true,
+		Rev:   "1-" + randomHex(8),
+	}
+	for row := 0; row < 3; row++ {
+		for n := 1; n <= 4; n++ {
+			ev.Seats = append(ev.Seats, fmt.Sprintf("S-%c%d-%s", 'A'+row, n, randomHex(3)))
+		}
+	}
+	return ev
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
@@ -322,6 +343,11 @@ func (app *App) apiAuth(w http.ResponseWriter, r *http.Request) {
 	s.User = creds.Username
 	s.Bearer = bearer
 	s.Step = "logged_in"
+	// evento de bienvenida: todo usuario entra con un evento ya publicado,
+	// así "comprar" está disponible desde el primer login
+	if s.ownedCount() == 0 {
+		s.Events = append(s.Events, buildEvent("Relampo Fest", "Estadio del Rayo", "2026-12-31"))
+	}
 	app.store.Unlock()
 	writeJSON(w, http.StatusOK, map[string]any{
 		"bearer":     bearer,

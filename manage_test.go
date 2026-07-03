@@ -173,7 +173,8 @@ func TestManageEventsFlow(t *testing.T) {
 	}
 
 	// límite: un usuario no puede tener más de 5 eventos
-	for i := 0; i < 5; i++ {
+	// (ya tiene 1: el evento de bienvenida sembrado en el login)
+	for i := 0; i < 4; i++ {
 		_, body = do("GET", "/manage", "", nil)
 		tok := rx(`name="publish_token" value="([^"]+)"`, body, "publish_token")
 		resp, body = do("POST", "/api/manage/events",

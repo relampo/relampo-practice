@@ -117,10 +117,10 @@ func TestFullPurchaseFlow(t *testing.T) {
 	}
 	auth := map[string]string{"Authorization": "Bearer " + authResp.Bearer}
 
-	// [3b] sin eventos propios, /events redirige a /manage
+	// [3b] el evento de bienvenida (Relampo Fest) permite comprar desde el login
 	resp, _ = get("/events", nil)
-	if resp.StatusCode != 302 || resp.Header.Get("Location") != "/manage" {
-		t.Fatalf("sin eventos, /events debía redirigir a /manage: %d %s", resp.StatusCode, resp.Header.Get("Location"))
+	if resp.StatusCode != 200 {
+		t.Fatalf("con el evento de bienvenida, /events debía dar 200: %d", resp.StatusCode)
 	}
 
 	// [3c] crear un evento (el catálogo de compra son los eventos del usuario)
@@ -153,8 +153,8 @@ func TestFullPurchaseFlow(t *testing.T) {
 		Events []struct{ ID string }
 	}
 	json.Unmarshal([]byte(body), &evList)
-	if len(evList.Events) != 1 {
-		t.Fatalf("esperaba 1 evento propio en el catálogo, hay %d", len(evList.Events))
+	if len(evList.Events) != 2 { // Relampo Fest (bienvenida) + el creado
+		t.Fatalf("esperaba 2 eventos en el catálogo, hay %d", len(evList.Events))
 	}
 	eventID := evList.Events[0].ID
 

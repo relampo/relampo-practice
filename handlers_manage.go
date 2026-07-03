@@ -102,19 +102,7 @@ func (app *App) apiManageCreate(w http.ResponseWriter, r *http.Request) {
 			"usa DELETE /api/manage/events/{id} (con If-Match) para liberar lugar")
 		return
 	}
-	ev := &Event{
-		ID:    "EV-" + randomUUID(),
-		Name:  body.Name,
-		Venue: body.Venue,
-		Date:  body.Date,
-		Owned: true,
-		Rev:   "1-" + randomHex(8),
-	}
-	for row := 0; row < 3; row++ {
-		for n := 1; n <= 4; n++ {
-			ev.Seats = append(ev.Seats, fmt.Sprintf("S-%c%d-%s", 'A'+row, n, randomHex(3)))
-		}
-	}
+	ev := buildEvent(body.Name, body.Venue, body.Date)
 	app.store.Lock()
 	s.Events = append(s.Events, ev)
 	s.PublishToken = "" // un solo uso

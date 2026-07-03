@@ -46,6 +46,13 @@ nav a:hover { color: var(--accent); }
   border: 1px solid var(--border); border-radius: 6px; color: var(--text-dim);
 }
 .lang a.active { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.userchip {
+  margin-left: 18px; font-size: 12px; font-weight: 700; font-family: var(--mono);
+  color: var(--accent); border: 1px solid var(--accent); border-radius: 999px;
+  padding: 3px 10px;
+}
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+@media (max-width: 720px) { .cols { grid-template-columns: 1fr; } }
 main { max-width: 860px; margin: 0 auto; padding: 40px 24px 80px; }
 h1 { font-size: 30px; letter-spacing: -0.5px; margin-bottom: 8px; }
 h1 .hl { color: var(--accent); }
@@ -115,6 +122,7 @@ const headerHTML = `
   <a class="logo" href="/"><span class="bolt">&#9889;</span>Relampo<span class="tag">Tickets</span></a>
   <nav>
     {{if .LoggedIn}}{{if .HasEvents}}<a href="/events" data-i18n="navBuy">comprar</a>{{end}}<a href="/manage" data-i18n="navManage">mis eventos</a>
+    <span class="userchip">{{.NavUser}}</span>
     <a href="/logout" data-i18n="navLogout">salir</a>{{end}}
     <span class="lang"><a href="#" data-setlang="es">ES</a><a href="#" data-setlang="en">EN</a></span>
   </nav>
@@ -203,6 +211,7 @@ var manageTmpl = mustPage("manage", `
 <main>
   <h1><span data-i18n="manageTitle">Mis</span> <span class="hl" data-i18n="manageTitleHl">eventos</span></h1>
   <p class="sub" data-i18n="manageSub">Cre&aacute; tus propios eventos: aparecen en el cat&aacute;logo y se pueden comprar.</p>
+  <div class="cols">
   <div class="panel">
     <h2 data-i18n="createTitle">Crear evento</h2>
     {{if .AtLimit}}<p class="note" data-i18n="limitNote">Alcanzaste el l&iacute;mite de 5 eventos. Borr&aacute; alguno para poder crear otro.</p>{{end}}
@@ -221,6 +230,7 @@ var manageTmpl = mustPage("manage", `
   <div class="panel">
     <h2 data-i18n="publishedTitle">Eventos publicados</h2>
     <div id="myEvents" class="note">&hellip;</div>
+  </div>
   </div>
 </main>`+footerHTML+`
 <script src="/static/app.js"></script>
