@@ -26,13 +26,17 @@ const (
 	bearerTTL         = 2 * time.Hour
 	hintsHeader       = "X-Practice-Hints"
 	correlationHeader = "X-Correlation-Id"
-	zombieIdleAfter   = 90 * time.Second
 )
 
 // maxSessionsPerIP: cuántas sesiones concurrentes admite un mismo nodo de
 // carga (una IP / una máquina). Configurable con RELAMPO_MAX_SESSIONS_PER_IP
 // (0 = sin límite).
 var maxSessionsPerIP = 5
+
+// zombieIdleAfter: cuánta inactividad convierte a una sesión en desalojable
+// cuando su nodo necesita el cupo. Configurable con
+// RELAMPO_ZOMBIE_IDLE_SECONDS (mínimo 5s para no desalojar VUs activos).
+var zombieIdleAfter = 90 * time.Second
 
 // clientIP resolves the source IP: first hop of X-Forwarded-For when behind
 // a proxy/App Runner, otherwise the socket's remote address.

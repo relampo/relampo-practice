@@ -72,6 +72,11 @@ func main() {
 			maxSessionsPerIP = n
 		}
 	}
+	if v := os.Getenv("RELAMPO_ZOMBIE_IDLE_SECONDS"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n >= 5 {
+			zombieIdleAfter = time.Duration(n) * time.Second
+		}
+	}
 	app := &App{
 		store:     NewStore(30 * time.Minute),
 		startedAt: time.Now(),
@@ -82,7 +87,8 @@ func main() {
 	fmt.Printf("   http://localhost:%s  (usuarios: user001…user%03d / Pass001!…Pass%03d!)\n", port, userCount, userCount)
 	fmt.Printf("   relampo_token: modo %s (RELAMPO_TOKEN_MODE=simple|hmac)\n", tokenMode)
 	if maxSessionsPerIP > 0 {
-		fmt.Printf("   límite: %d sesiones concurrentes por nodo/IP (RELAMPO_MAX_SESSIONS_PER_IP)\n", maxSessionsPerIP)
+		fmt.Printf("   límite: %d sesiones concurrentes por nodo/IP (RELAMPO_MAX_SESSIONS_PER_IP), zombi tras %s (RELAMPO_ZOMBIE_IDLE_SECONDS)\n",
+			maxSessionsPerIP, zombieIdleAfter)
 	}
 	log.Fatal(http.ListenAndServe(addr, withLogging(newMux(app))))
 }

@@ -169,8 +169,16 @@ No hace falta desloguearse para liberar cupos: si un script se corta sin
 las desaloja automáticamente cuando el mismo nodo necesita el lugar (tras ~90 s
 de inactividad). `GET /logout` lo libera al instante (buena práctica del flujo).
 
-Configurable con `RELAMPO_MAX_SESSIONS_PER_IP` (default 5; `0` = sin límite).
+Configuración:
+
+- `RELAMPO_MAX_SESSIONS_PER_IP` — sesiones concurrentes por nodo (default `5`; `0` = sin límite).
+- `RELAMPO_ZOMBIE_IDLE_SECONDS` — segundos de inactividad para considerar una
+  sesión desalojable (default `90`; mínimo `5`). Bajarlo (ej. `30`) hace más
+  fluido el ciclo de debug corrida-tras-corrida sin logout.
+
 Detrás de un proxy/App Runner, la IP se toma del header `X-Forwarded-For`.
+
+Tip para depurar en tu máquina sin límites: `RELAMPO_MAX_SESSIONS_PER_IP=0 go run .`
 
 ## Errores de correlación (para aprender)
 
