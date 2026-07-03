@@ -98,17 +98,37 @@ Los eventos creados entran al catálogo de la sesión: el flujo 2 alimenta al fl
 | `event_id` (propio) | `$.event.id` de create | jsonpath | path de edit/update/delete |
 | `rev` | header **`ETag`** de la página de edit, o `$.event.rev` | regex sobre headers / jsonpath | header **`If-Match`** de PUT/DELETE (sin él → 428; obsoleta → 412) |
 
-## ⭐ El `relampo_token` (valor A ≠ valor B)
+## ⭐ El `relampo_token` (mismo nombre, dos valores: A ≠ B)
 
 El token que **recibes** en la respuesta (`$.relampoToken`, valor A) **no** es el que
-debes **enviar**. El navegador lo transforma con JavaScript antes de enviarlo:
+debes **enviar**: el navegador lo transforma con JavaScript antes de mandarlo en
+`POST /pay/start`. Para scriptear el flujo hay que aplicar la misma transformación en
+un **preprocesador** del request. La función `signRelampoToken()` está visible en
+`/static/app.js`.
+
+### Modo `simple` (por defecto) — cifrado XOR, ~5 líneas de JS puro
+
+Cada carácter de A se XORea con la sal pública y se emite en hexadecimal.
+Funciona en cualquier motor JavaScript, sin librerías:
+
+```javascript
+function signRelampoToken(a) {
+  var salt = 'relampo-public-salt-v1', out = '';
+  for (var i = 0; i < a.length; i++) {
+    var x = a.charCodeAt(i) ^ salt.charCodeAt(i % salt.length);
+    out += (x < 16 ? '0' : '') + x.toString(16);
+  }
+  return out;
+}
+```
+
+En Groovy/JMeter la misma idea son 4 líneas con `charAt`/`String.format("%02x", …)`.
+
+### Modo `hmac` (avanzado) — arrancar con `RELAMPO_TOKEN_MODE=hmac`
 
 ```
 B = hex( HMAC-SHA256( A, "relampo-public-salt-v1" ) )
 ```
-
-La función `signRelampoToken()` está visible en `/static/app.js`. Para scriptear el
-flujo hay que reimplementarla en tu herramienta:
 
 - **JMeter** (JSR223/Groovy):
   ```groovy
@@ -121,8 +141,12 @@ flujo hay que reimplementarla en tu herramienta:
 - **k6**: `import crypto from 'k6/crypto'; crypto.hmac('sha256', salt, tokenA, 'hex')`
 - **curl / bash**: `printf '%s' "$A" | openssl dgst -sha256 -hmac "relampo-public-salt-v1" -hex`
 
-Reglas del token: **un solo uso** (reusarlo → 403) y **expira a los 60 segundos**
-(scripts lentos o valores grabados → 403). Enviar el valor A crudo → 403 con mensaje explícito.
+El `/static/app.js` servido se adapta al modo activo, así que lo que graba el recorder
+siempre coincide con lo que valida el servidor.
+
+Reglas del token (en ambos modos): **un solo uso** (reusarlo → 403) y **expira a los
+60 segundos** (scripts lentos o valores grabados → 403). Enviar el valor A crudo → 403
+con mensaje explícito.
 
 ## Modo pista (para aprender)
 

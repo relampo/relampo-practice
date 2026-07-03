@@ -14,6 +14,7 @@ import (
 type App struct {
 	store          *Store
 	startedAt      time.Time
+	appJS          string
 	receiptCounter atomic.Int64
 }
 
@@ -147,7 +148,7 @@ func (app *App) home(w http.ResponseWriter, r *http.Request) {
 // GET /static/app.js — served with an ETag so browsers revalidate with
 // If-None-Match and get a 304 (the Etag correlation case).
 func (app *App) staticAppJS(w http.ResponseWriter, r *http.Request) {
-	sum := sha256.Sum256([]byte(appJS))
+	sum := sha256.Sum256([]byte(app.appJS))
 	etag := `"` + hex.EncodeToString(sum[:8]) + `"`
 	w.Header().Set("Etag", etag)
 	w.Header().Set("Cache-Control", "no-cache")
@@ -156,7 +157,7 @@ func (app *App) staticAppJS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
-	w.Write([]byte(appJS))
+	w.Write([]byte(app.appJS))
 }
 
 // GET /events — página del catálogo; siembra catálogo y eventos por sesión.
@@ -437,7 +438,10 @@ func (app *App) payStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sent := r.PostFormValue("relampo_token")
-	hint := "el valor A viene en $.relampoToken de POST /api/reservations; debes enviar B = hex(HMAC-SHA256(A, 'relampo-public-salt-v1')) — mira signRelampoToken() en /static/app.js y reimpleméntala en tu herramienta"
+	hint := "el valor A viene en $.relampoToken de POST /api/reservations; debes enviar B = XOR de cada carácter de A con la sal 'relampo-public-salt-v1', en hex — mira signRelampoToken() en /static/app.js y reimpleméntala en el preprocesador de tu herramienta"
+	if tokenMode == "hmac" {
+		hint = "el valor A viene en $.relampoToken de POST /api/reservations; debes enviar B = hex(HMAC-SHA256(A, 'relampo-public-salt-v1')) — mira signRelampoToken() en /static/app.js y reimpleméntala en tu herramienta"
+	}
 	switch {
 	case sent == "":
 		writeErr(w, r, http.StatusBadRequest, "relampo_token", "falta relampo_token", hint)

@@ -17,7 +17,7 @@ import (
 // testing script would: extracting every dynamic value from the previous
 // response and injecting it into the next request.
 func TestFullPurchaseFlow(t *testing.T) {
-	app := &App{store: NewStore(30 * time.Minute), startedAt: time.Now()}
+	app := &App{store: NewStore(30 * time.Minute), startedAt: time.Now(), appJS: buildAppJS(tokenMode)}
 	srv := httptest.NewServer(withLogging(newMux(app)))
 	defer srv.Close()
 
@@ -260,13 +260,21 @@ func TestFullPurchaseFlow(t *testing.T) {
 	}
 }
 
-// TestJSAndGoHMACMatch pins the contract between signRelampoToken() in Go and
-// the JS twin embedded in app.js (verified externally against node:crypto).
-func TestJSAndGoHMACMatch(t *testing.T) {
-	got := signRelampoToken("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
+// TestTokenTransforms pins the contract between the Go transforms and their
+// JS twins embedded in app.js (verified externally against node:crypto).
+func TestTokenTransforms(t *testing.T) {
+	// XOR simple: 'a'^'r'=0x13, 'b'^'e'=0x07, 'c'^'l'=0x0f (sal "relampo-…")
+	if got := xorSignToken("abc"); got != "13070f" {
+		t.Fatalf("xor: got %s want 13070f", got)
+	}
+	got := hmacSignToken("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
 	want := "714c0204af3371804c1df9b31acd262b76e945ef2e3bc84f352e8dbe8d27f11e"
 	if got != want {
 		t.Fatalf("HMAC Go≠JS: got %s want %s", got, want)
+	}
+	// el dispatcher usa el modo por defecto (simple)
+	if signRelampoToken("abc") != xorSignToken("abc") {
+		t.Fatal("signRelampoToken no despacha al modo simple por defecto")
 	}
 }
 

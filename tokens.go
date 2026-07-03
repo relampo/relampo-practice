@@ -48,9 +48,33 @@ func randomUUID() string {
 	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:16])
 }
 
-// signRelampoToken is the server-side twin of signRelampoToken() in app.js:
-// value B = hex(HMAC-SHA256(value A, relampoSalt)).
+// tokenMode selects the client-side transform of the relampo_token:
+//   - "simple" (default): XOR con la sal, en hex — reimplementable en ~5
+//     líneas de JavaScript puro en cualquier preprocesador.
+//   - "hmac": hex(HMAC-SHA256(A, sal)) — modo avanzado.
+//
+// Se elige con la variable de entorno RELAMPO_TOKEN_MODE.
+var tokenMode = "simple"
+
+// signRelampoToken is the server-side twin of signRelampoToken() in app.js.
 func signRelampoToken(tokenA string) string {
+	if tokenMode == "hmac" {
+		return hmacSignToken(tokenA)
+	}
+	return xorSignToken(tokenA)
+}
+
+// xorSignToken: B[i] = hex(A[i] XOR salt[i % len(salt)]).
+func xorSignToken(tokenA string) string {
+	salt := []byte(relampoSalt)
+	out := make([]byte, 0, len(tokenA)*2)
+	for i := 0; i < len(tokenA); i++ {
+		out = fmt.Appendf(out, "%02x", tokenA[i]^salt[i%len(salt)])
+	}
+	return string(out)
+}
+
+func hmacSignToken(tokenA string) string {
 	mac := hmac.New(sha256.New, []byte(relampoSalt))
 	mac.Write([]byte(tokenA))
 	return hex.EncodeToString(mac.Sum(nil))

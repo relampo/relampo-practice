@@ -62,12 +62,17 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
+	if m := os.Getenv("RELAMPO_TOKEN_MODE"); m == "hmac" || m == "simple" {
+		tokenMode = m
+	}
 	app := &App{
 		store:     NewStore(30 * time.Minute),
 		startedAt: time.Now(),
+		appJS:     buildAppJS(tokenMode),
 	}
 	addr := ":" + port
 	fmt.Printf("⚡ RelampoTickets — app de práctica para correlación\n")
 	fmt.Printf("   http://localhost:%s  (usuarios: user001…user%03d / Pass001!…Pass%03d!)\n", port, userCount, userCount)
+	fmt.Printf("   relampo_token: modo %s (RELAMPO_TOKEN_MODE=simple|hmac)\n", tokenMode)
 	log.Fatal(http.ListenAndServe(addr, withLogging(newMux(app))))
 }

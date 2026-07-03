@@ -1,18 +1,25 @@
 package main
 
-// appJS is the single client-side script, served from /static/app.js with an
-// ETag (the browser re-requests it with If-None-Match — that's the 304
-// correlation case). The SHA-256/HMAC below is pure JS on purpose: Web Crypto
-// needs a secure context, and this app must also work over plain HTTP behind
-// the Relampo MITM recorder. Verified byte-identical against node:crypto and
-// Go's crypto/hmac.
-const appJS = `(function () {
+import "strings"
+
+// buildAppJS renders the single client-side script, served from
+// /static/app.js with an ETag (the browser re-requests it with If-None-Match
+// — that's the 304 correlation case). The crypto below is pure JS on purpose:
+// Web Crypto needs a secure context, and this app must also work over plain
+// HTTP behind the Relampo MITM recorder. Verified byte-identical against
+// node:crypto and Go's crypto/hmac.
+func buildAppJS(mode string) string {
+	return strings.ReplaceAll(appJSTemplate, "__TOKEN_MODE__", mode)
+}
+
+const appJSTemplate = `(function () {
   'use strict';
 
-  // La sal es publica a proposito: el reto de la practica es descubrir que el
-  // token viaja transformado y reimplementar esta funcion en tu herramienta
-  // de carga (JSR223 en JMeter, modulo crypto en k6, C en LoadRunner).
+  // La sal y el modo son publicos a proposito: el reto de la practica es
+  // descubrir que el token viaja transformado y reimplementar la funcion
+  // signRelampoToken() en el preprocesador de tu herramienta de carga.
   var RELAMPO_SALT = 'relampo-public-salt-v1';
+  var TOKEN_MODE = '__TOKEN_MODE__';
 
   function sha256Bytes(msgBytes) {
     var K = [
@@ -101,9 +108,20 @@ const appJS = `(function () {
     return bytesToHex(sha256Bytes(opad.concat(inner)));
   }
 
-  // valor B = HMAC-SHA256(valor A, sal publica), en hexadecimal.
+  // Cifrado simple (modo por defecto): cada caracter del token se XORea con
+  // la sal y se emite en hexadecimal. Reimplementable en ~5 lineas de JS puro.
+  function xorSignToken(tokenA) {
+    var out = '';
+    for (var i = 0; i < tokenA.length; i++) {
+      var x = tokenA.charCodeAt(i) ^ RELAMPO_SALT.charCodeAt(i % RELAMPO_SALT.length);
+      out += (x < 16 ? '0' : '') + x.toString(16);
+    }
+    return out;
+  }
+
+  // valor B = transformacion del valor A segun el modo del servidor.
   function signRelampoToken(tokenA) {
-    return hmacSha256Hex(RELAMPO_SALT, tokenA);
+    return TOKEN_MODE === 'hmac' ? hmacSha256Hex(RELAMPO_SALT, tokenA) : xorSignToken(tokenA);
   }
 
   function el(id) { return document.getElementById(id); }

@@ -16,7 +16,7 @@ import (
 // correlation patterns: single-use publish_token (HTML → JSON body) and
 // optimistic locking (ETag response header → If-Match request header).
 func TestManageEventsFlow(t *testing.T) {
-	app := &App{store: NewStore(30 * time.Minute), startedAt: time.Now()}
+	app := &App{store: NewStore(30 * time.Minute), startedAt: time.Now(), appJS: buildAppJS(tokenMode)}
 	srv := httptest.NewServer(newMux(app))
 	defer srv.Close()
 
