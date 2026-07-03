@@ -94,12 +94,14 @@ footer { text-align: center; color: var(--text-dim); font-size: 12px; padding: 2
   margin-top: 44px; margin-bottom: 14px; font-size: 12px; letter-spacing: 1.4px;
   text-transform: uppercase; color: var(--accent); font-weight: 700;
 }
-.features { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.features { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 640px) { .features { grid-template-columns: 1fr; } }
 .feature {
   background: var(--bg-panel); border: 1px solid var(--border);
   border-radius: 12px; padding: 18px 18px 16px;
 }
-.feature .ico { display: block; font-size: 20px; margin-bottom: 10px; }
+.feature .ico { display: block; margin-bottom: 12px; }
+.feature .ico svg { width: 22px; height: 22px; stroke: var(--accent); }
 .feature h3 { font-size: 15px; margin-bottom: 6px; }
 .feature p { font-size: 13px; color: var(--text-dim); line-height: 1.55; }
 .features-link { display: block; margin-top: 16px; font-size: 13px; color: var(--accent); text-decoration: none; }
@@ -142,22 +144,22 @@ var homeTmpl = mustPage("home", `
   <div class="features-head" data-i18n="featHead">&iquest;Por qu&eacute; Relampo?</div>
   <div class="features">
     <div class="feature">
-      <span class="ico">&#9889;</span>
+      <span class="ico"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
       <h3 data-i18n="feat1t">Correlaci&oacute;n autom&aacute;tica completa</h3>
       <p data-i18n="feat1d">Relampo detecta y correlaciona los valores din&aacute;micos por vos al grabar: menos scripting manual, pruebas listas antes.</p>
     </div>
     <div class="feature">
-      <span class="ico">&#128200;</span>
+      <span class="ico"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><path d="M12 12V8"/></svg></span>
       <h3 data-i18n="feat2t">500 usuarios virtuales, 4 nodos</h3>
       <p data-i18n="feat2d">Gener&aacute; hasta 500 usuarios virtuales distribuidos en 4 nodos de carga con la integraci&oacute;n nativa de Relampo con GitHub.</p>
     </div>
     <div class="feature">
-      <span class="ico">&#128196;</span>
+      <span class="ico"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="m10 12-2 2 2 2"/><path d="m14 16 2-2-2-2"/></svg></span>
       <h3 data-i18n="feat3t">Scripts YAML declarativos</h3>
       <p data-i18n="feat3d">F&aacute;ciles de leer, intuitivos y versionables en Git: revis&aacute;s tus pruebas de performance como revis&aacute;s c&oacute;digo.</p>
     </div>
     <div class="feature">
-      <span class="ico">&#128640;</span>
+      <span class="ico"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg></span>
       <h3 data-i18n="feat4t">Motor de carga en Go</h3>
       <p data-i18n="feat4d">Generaci&oacute;n de carga de alto rendimiento con la eficiencia y la concurrencia nativa de Go.</p>
     </div>
