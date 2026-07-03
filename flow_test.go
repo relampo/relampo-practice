@@ -270,12 +270,12 @@ func TestJSAndGoHMACMatch(t *testing.T) {
 	}
 }
 
-func TestUsersCSV(t *testing.T) {
-	csv := usersCSV()
-	if !strings.Contains(csv, "user001,Pass001!") || !strings.Contains(csv, "user500,Pass500!") {
-		t.Fatal("users.csv incompleto")
+func TestCredentials(t *testing.T) {
+	if !checkCredentials("user001", "Pass001!") || !checkCredentials("user250", "Pass250!") ||
+		!checkCredentials("user500", "Pass500!") {
+		t.Fatal("credenciales válidas rechazadas")
 	}
-	if !checkCredentials("user250", "Pass250!") || checkCredentials("user501", "Pass501!") {
-		t.Fatal("validación de credenciales incorrecta")
+	if checkCredentials("user501", "Pass501!") || checkCredentials("user001", "Pass002!") {
+		t.Fatal("credenciales inválidas aceptadas")
 	}
 }

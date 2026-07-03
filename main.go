@@ -12,7 +12,6 @@ func newMux(app *App) *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /", app.home)
 	mux.HandleFunc("GET /static/app.js", app.staticAppJS)
-	mux.HandleFunc("GET /users.csv", app.usersCSVHandler)
 	mux.HandleFunc("GET /health", app.health)
 	mux.HandleFunc("GET /debug/sessions", app.debugSessions)
 	mux.HandleFunc("GET /events", app.eventsPage)
@@ -23,6 +22,13 @@ func newMux(app *App) *http.ServeMux {
 	mux.HandleFunc("GET /api/events/{id}/seats", app.apiSeats)
 	mux.HandleFunc("POST /api/reservations", app.apiReservations)
 	mux.HandleFunc("GET /api/tickets/{id}", app.apiTicket)
+
+	mux.HandleFunc("GET /manage", app.managePage)
+	mux.HandleFunc("GET /manage/events/{id}/edit", app.manageEditPage)
+	mux.HandleFunc("GET /api/manage/events", app.apiManageList)
+	mux.HandleFunc("POST /api/manage/events", app.apiManageCreate)
+	mux.HandleFunc("PUT /api/manage/events/{id}", app.apiManageUpdate)
+	mux.HandleFunc("DELETE /api/manage/events/{id}", app.apiManageDelete)
 
 	mux.HandleFunc("POST /pay/start", app.payStart)
 	mux.HandleFunc("GET /pay/authorize", app.payAuthorize)
@@ -63,6 +69,5 @@ func main() {
 	addr := ":" + port
 	fmt.Printf("⚡ RelampoTickets — app de práctica para correlación\n")
 	fmt.Printf("   http://localhost:%s  (usuarios: user001…user%03d / Pass001!…Pass%03d!)\n", port, userCount, userCount)
-	fmt.Printf("   data pool: http://localhost:%s/users.csv\n", port)
 	log.Fatal(http.ListenAndServe(addr, withLogging(newMux(app))))
 }

@@ -89,6 +89,8 @@ const headerHTML = `
 <header>
   <a class="logo" href="/"><span class="bolt">&#9889;</span>Relampo<span class="tag">Tickets</span></a>
   <nav>
+    <a href="/events">comprar</a>
+    <a href="/manage">mis eventos</a>
     <a href="/logout">salir</a>
   </nav>
 </header>`
@@ -140,6 +142,57 @@ var eventsTmpl = mustPage("events", `
       <input type="hidden" id="resvId" name="reservation_id" value="">
       <input type="hidden" id="relampoToken" name="relampo_token" value="">
       <button type="submit">Pagar ahora</button>
+    </form>
+  </div>
+</main>`+footerHTML+`
+<script src="/static/app.js"></script>
+</body>`)
+
+var manageTmpl = mustPage("manage", `
+<body data-page="manage">`+headerHTML+`
+<main>
+  <h1>Mis <span class="hl">eventos</span></h1>
+  <p class="sub">Cre&aacute; tus propios eventos: aparecen en el cat&aacute;logo y se pueden comprar.</p>
+  <div class="panel">
+    <h2>Crear evento</h2>
+    <form id="createForm">
+      <input type="hidden" name="publish_token" value="{{.PublishToken}}">
+      <label for="evname">Nombre</label>
+      <input type="text" id="evname" autocomplete="off" placeholder="Festival de Invierno">
+      <label for="evvenue">Lugar</label>
+      <input type="text" id="evvenue" autocomplete="off" placeholder="Teatro Principal">
+      <label for="evdate">Fecha</label>
+      <input type="text" id="evdate" autocomplete="off" placeholder="2026-12-01">
+      <button type="submit">Publicar evento</button>
+      <div id="status" class="status"></div>
+    </form>
+  </div>
+  <div class="panel">
+    <h2>Eventos publicados</h2>
+    <div id="myEvents" class="note">Cargando&hellip;</div>
+  </div>
+</main>`+footerHTML+`
+<script src="/static/app.js"></script>
+</body>`)
+
+var editTmpl = mustPage("edit", `
+<body data-page="edit">`+headerHTML+`
+<main>
+  <h1>Editar <span class="hl">evento</span></h1>
+  <div class="panel">
+    <h2>{{.Name}}</h2>
+    <form id="editForm">
+      <input type="hidden" id="eventId" value="{{.ID}}">
+      <input type="hidden" id="eventRev" name="rev" value="{{.Rev}}">
+      <label for="evname">Nombre</label>
+      <input type="text" id="evname" value="{{.Name}}">
+      <label for="evvenue">Lugar</label>
+      <input type="text" id="evvenue" value="{{.Venue}}">
+      <label for="evdate">Fecha</label>
+      <input type="text" id="evdate" value="{{.Date}}">
+      <button type="submit">Guardar cambios</button>
+      <a class="btn" style="background:transparent;color:var(--text-dim);border:1px solid var(--border)" href="/manage">Cancelar</a>
+      <div id="status" class="status"></div>
     </form>
   </div>
 </main>`+footerHTML+`

@@ -47,6 +47,8 @@ type Event struct {
 	Date  string
 	Price int
 	Seats []string
+	Owned bool   // true si lo creó el usuario en /manage
+	Rev   string // versión para bloqueo optimista (ETag / If-Match)
 }
 
 // Session is all server-side state bound to the single relampo_session cookie.
@@ -60,6 +62,7 @@ type Session struct {
 	Bearer        string
 	CatalogID     string
 	Events        []*Event
+	PublishToken  string
 	CorrelationID string
 	Reservations  map[string]*Reservation
 	PayFlows      map[string]*PayFlow

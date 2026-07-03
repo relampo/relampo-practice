@@ -159,12 +159,6 @@ func (app *App) staticAppJS(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(appJS))
 }
 
-// GET /users.csv — data pool listo para Relampo/JMeter/k6.
-func (app *App) usersCSVHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/csv; charset=utf-8")
-	w.Write([]byte(usersCSV()))
-}
-
 // GET /events — página del catálogo; siembra catálogo y eventos por sesión.
 func (app *App) eventsPage(w http.ResponseWriter, r *http.Request) {
 	s := app.requireSession(w, r)

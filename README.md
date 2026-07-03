@@ -9,6 +9,10 @@ Un solo binario Go, **sin base de datos ni dependencias externas**: 500 usuarios
 hardcodeados, estado en memoria con TTL, todo el JavaScript servido desde la misma app
 (cero CDNs — funciona sin internet y el MITM captura el 100% del tráfico).
 
+Dos flujos de negocio: **comprar una entrada** (login → catálogo → reserva → gateway de
+pago → ticket) y **gestionar eventos propios** (crear → editar → borrar), encadenables:
+lo que creas en el segundo se puede comprar en el primero.
+
 ## Cómo correrla
 
 ```bash
@@ -26,7 +30,9 @@ docker run -p 8080:8080 relampo-tickets
 ## Usuarios
 
 500 usuarios generados en código: `user001`…`user500` con contraseña `Pass001!`…`Pass500!`.
-Data pool listo para importar: **`GET /users.csv`**.
+El patrón es predecible a propósito: el data pool CSV se arma a mano en un minuto
+(o con un one-liner: `for i in $(seq -w 1 500); do echo "user$i,Pass$i!"; done`).
+Las credenciales no se muestran en ninguna pantalla de la app.
 
 ## Cookies
 
@@ -53,6 +59,22 @@ requests la exigen como header `Cookie`.
 [14] GET  /logout                          → invalida la sesión
 ```
 
+## Flujo 2: gestión de eventos (crear / editar / borrar)
+
+```
+[15] GET  /manage                          → publish_token (input oculto, UN SOLO USO)
+[16] POST /api/manage/events               → crea evento; exige publishToken en el JSON
+                                             devuelve $.event.id + $.event.rev
+[17] GET  /manage/events/{id}/edit         → rev vigente en el header ETag de la respuesta
+[18] PUT  /api/manage/events/{id}          → exige header If-Match con la rev vigente
+                                             (falta → 428, rev vieja → 412) devuelve rev nueva
+[19] GET  /api/manage/events               → lista de eventos propios (con sus rev)
+[20] DELETE /api/manage/events/{id}        → borra, también con If-Match
+```
+
+Los eventos creados entran al catálogo de la sesión: el flujo 2 alimenta al flujo 1
+(puedes crear un evento y comprarle una entrada en la misma iteración).
+
 ## Mapa de correlación
 
 | Variable | Nace en | Extractor | Viaja en el siguiente request como |
@@ -72,6 +94,9 @@ requests la exigen como header `Cookie`.
 | `code` | header `Location` del 302 de `/pay/continue` | regex sobre headers | query param del callback + form body de confirm |
 | `view_state` | input oculto de `/pay/callback` (~1.4 KB base64) | regex | form body de `POST /pay/confirm` |
 | `ticket_id` | atributo `data-ticket` del HTML de éxito | regex | path de `GET /api/tickets/{id}` |
+| `publish_token` | input oculto en `GET /manage` (un solo uso) | regex | campo `publishToken` del **body JSON** de create |
+| `event_id` (propio) | `$.event.id` de create | jsonpath | path de edit/update/delete |
+| `rev` | header **`ETag`** de la página de edit, o `$.event.rev` | regex sobre headers / jsonpath | header **`If-Match`** de PUT/DELETE (sin él → 428; obsoleta → 412) |
 
 ## ⭐ El `relampo_token` (valor A ≠ valor B)
 
@@ -114,7 +139,6 @@ curl -s -H "X-Practice-Hints: true" http://localhost:8080/api/events | jq
 - `GET /health` — estado y uptime.
 - `GET /debug/sessions` — sesiones activas en vivo (usuario, paso del flujo, edad):
   útil para monitorear durante la prueba de carga.
-- `GET /users.csv` — data pool de los 500 usuarios.
 
 ## Deploy en AWS (después de practicar local)
 

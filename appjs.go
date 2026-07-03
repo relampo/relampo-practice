@@ -186,6 +186,90 @@ const appJS = `(function () {
       .catch(function (e) { setStatus(String(e.message || e), true); });
   }
 
+  function initManage() {
+    loadMyEvents();
+    el('createForm').addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var h = authHeaders();
+      h['Content-Type'] = 'application/json';
+      fetch('/api/manage/events', {
+        method: 'POST', headers: h,
+        body: JSON.stringify({
+          name: el('evname').value,
+          venue: el('evvenue').value,
+          date: el('evdate').value,
+          publishToken: ev.target.querySelector('input[name="publish_token"]').value
+        })
+      })
+        .then(jsonOrThrow)
+        .then(function () {
+          // el publish_token es de un solo uso: recargar para obtener otro
+          window.location.reload();
+        })
+        .catch(function (e) { setStatus(String(e.message || e), true); });
+    });
+  }
+
+  function loadMyEvents() {
+    fetch('/api/manage/events', { headers: authHeaders() })
+      .then(jsonOrThrow)
+      .then(function (data) {
+        var box = el('myEvents');
+        if (data.events.length === 0) { box.textContent = 'Todavía no publicaste eventos.'; return; }
+        box.textContent = '';
+        data.events.forEach(function (evt) {
+          var row = document.createElement('div');
+          row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)';
+          var label = document.createElement('span');
+          label.textContent = evt.name + ' — ' + evt.venue + ' (' + evt.date + ')';
+          var actions = document.createElement('span');
+          var edit = document.createElement('a');
+          edit.href = '/manage/events/' + evt.id + '/edit';
+          edit.textContent = 'editar';
+          edit.style.cssText = 'color:var(--accent);margin-right:14px';
+          var del = document.createElement('a');
+          del.href = '#';
+          del.textContent = 'borrar';
+          del.style.color = 'var(--err)';
+          del.addEventListener('click', function (clickEv) {
+            clickEv.preventDefault();
+            var h = authHeaders();
+            h['If-Match'] = evt.rev;
+            fetch('/api/manage/events/' + evt.id, { method: 'DELETE', headers: h })
+              .then(jsonOrThrow)
+              .then(loadMyEvents)
+              .catch(function (e) { setStatus(String(e.message || e), true); });
+          });
+          actions.appendChild(edit);
+          actions.appendChild(del);
+          row.appendChild(label);
+          row.appendChild(actions);
+          box.appendChild(row);
+        });
+      })
+      .catch(function (e) { el('myEvents').textContent = String(e.message || e); });
+  }
+
+  function initEdit() {
+    el('editForm').addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var h = authHeaders();
+      h['Content-Type'] = 'application/json';
+      h['If-Match'] = el('eventRev').value;
+      fetch('/api/manage/events/' + el('eventId').value, {
+        method: 'PUT', headers: h,
+        body: JSON.stringify({
+          name: el('evname').value,
+          venue: el('evvenue').value,
+          date: el('evdate').value
+        })
+      })
+        .then(jsonOrThrow)
+        .then(function () { window.location.href = '/manage'; })
+        .catch(function (e) { setStatus(String(e.message || e), true); });
+    });
+  }
+
   function initCallback() {
     el('csrfField').value = sessionStorage.getItem('relampo_csrf') || '';
   }
@@ -201,6 +285,8 @@ const appJS = `(function () {
   var page = document.body.getAttribute('data-page');
   if (page === 'home') initHome();
   else if (page === 'events') initEvents();
+  else if (page === 'manage') initManage();
+  else if (page === 'edit') initEdit();
   else if (page === 'callback') initCallback();
   else if (page === 'success') initSuccess();
 })();
