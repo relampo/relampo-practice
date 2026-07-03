@@ -69,6 +69,16 @@ type Session struct {
 	Tickets       map[string]*Ticket
 }
 
+func (s *Session) ownedCount() int {
+	n := 0
+	for _, ev := range s.Events {
+		if ev.Owned {
+			n++
+		}
+	}
+	return n
+}
+
 func (s *Session) findEvent(id string) *Event {
 	for _, ev := range s.Events {
 		if ev.ID == id {

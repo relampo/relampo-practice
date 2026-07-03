@@ -117,6 +117,22 @@ func TestFullPurchaseFlow(t *testing.T) {
 	}
 	auth := map[string]string{"Authorization": "Bearer " + authResp.Bearer}
 
+	// [3b] sin eventos propios, /events redirige a /manage
+	resp, _ = get("/events", nil)
+	if resp.StatusCode != 302 || resp.Header.Get("Location") != "/manage" {
+		t.Fatalf("sin eventos, /events debía redirigir a /manage: %d %s", resp.StatusCode, resp.Header.Get("Location"))
+	}
+
+	// [3c] crear un evento (el catálogo de compra son los eventos del usuario)
+	_, body = get("/manage", nil)
+	pubTok := rx(`name="publish_token" value="([^"]+)"`, body, "publish_token")
+	resp, body = post("/api/manage/events", "application/json",
+		fmt.Sprintf(`{"name":"Mi Concierto","venue":"Mi Sala","date":"2026-11-20","publishToken":%q}`, pubTok),
+		auth)
+	if resp.StatusCode != 201 {
+		t.Fatalf("crear evento: %d %s", resp.StatusCode, body)
+	}
+
 	// [4] GET /events — catalogId en JSON escapado dentro de atributo HTML
 	_, body = get("/events", nil)
 	rawCfg := rx(`data-config="([^"]+)"`, body, "data-config")
@@ -137,7 +153,10 @@ func TestFullPurchaseFlow(t *testing.T) {
 		Events []struct{ ID string }
 	}
 	json.Unmarshal([]byte(body), &evList)
-	eventID := evList.Events[3].ID
+	if len(evList.Events) != 1 {
+		t.Fatalf("esperaba 1 evento propio en el catálogo, hay %d", len(evList.Events))
+	}
+	eventID := evList.Events[0].ID
 
 	// [6] GET /api/events/{id}/seats — path param, X-Correlation-Id en header
 	resp, body = get("/api/events/"+eventID+"/seats", auth)

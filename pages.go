@@ -92,13 +92,14 @@ pre.json {
 footer { text-align: center; color: var(--text-dim); font-size: 12px; padding: 24px; }
 `
 
+// Nav links are server-driven: nothing but the language switch shows before
+// login, and "comprar" only shows once the user has created events.
 const headerHTML = `
 <header>
   <a class="logo" href="/"><span class="bolt">&#9889;</span>Relampo<span class="tag">Tickets</span></a>
   <nav>
-    <a href="/events" data-i18n="navBuy">comprar</a>
-    <a href="/manage" data-i18n="navManage">mis eventos</a>
-    <a href="/logout" data-i18n="navLogout">salir</a>
+    {{if .LoggedIn}}{{if .HasEvents}}<a href="/events" data-i18n="navBuy">comprar</a>{{end}}<a href="/manage" data-i18n="navManage">mis eventos</a>
+    <a href="/logout" data-i18n="navLogout">salir</a>{{end}}
     <span class="lang"><a href="#" data-setlang="es">ES</a><a href="#" data-setlang="en">EN</a></span>
   </nav>
 </header>`
@@ -163,7 +164,8 @@ var manageTmpl = mustPage("manage", `
   <p class="sub" data-i18n="manageSub">Cre&aacute; tus propios eventos: aparecen en el cat&aacute;logo y se pueden comprar.</p>
   <div class="panel">
     <h2 data-i18n="createTitle">Crear evento</h2>
-    <form id="createForm">
+    {{if .AtLimit}}<p class="note" data-i18n="limitNote">Alcanzaste el l&iacute;mite de 5 eventos. Borr&aacute; alguno para poder crear otro.</p>{{end}}
+    <form id="createForm"{{if .AtLimit}} style="display:none"{{end}}>
       <input type="hidden" name="publish_token" value="{{.PublishToken}}">
       <label for="evname" data-i18n="nameLabel">Nombre</label>
       <input type="text" id="evname" autocomplete="off" placeholder="Festival de Invierno" data-i18n-ph="namePh">

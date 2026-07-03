@@ -155,8 +155,9 @@ const appJSTemplate = `(function () {
       jsVerifying: 'Verificando tu entrada…',
       jsVerified: 'Entrada verificada. Te la enviamos por correo.',
       jsVerifyFail: 'No pudimos verificar la entrada: ',
-      jsNoEvents: 'Todavía no publicaste eventos.',
-      jsEdit: 'editar', jsDelete: 'borrar', jsLoading: 'Cargando…'
+      jsNoEvents: 'Todavía no publicaste eventos. Creá el primero con el formulario de arriba.',
+      jsEdit: 'editar', jsDelete: 'borrar', jsLoading: 'Cargando…',
+      limitNote: 'Alcanzaste el límite de 5 eventos. Borrá alguno para poder crear otro.'
     },
     en: {
       navBuy: 'buy tickets', navManage: 'my events', navLogout: 'logout',
@@ -185,8 +186,9 @@ const appJSTemplate = `(function () {
       jsVerifying: 'Verifying your ticket…',
       jsVerified: 'Ticket verified. We emailed it to you.',
       jsVerifyFail: 'We could not verify your ticket: ',
-      jsNoEvents: 'You have not published any events yet.',
-      jsEdit: 'edit', jsDelete: 'delete', jsLoading: 'Loading…'
+      jsNoEvents: 'You have not published any events yet. Create your first one with the form above.',
+      jsEdit: 'edit', jsDelete: 'delete', jsLoading: 'Loading…',
+      limitNote: 'You reached the limit of 5 events. Delete one to create another.'
     }
   };
 
@@ -264,7 +266,8 @@ const appJSTemplate = `(function () {
         .then(jsonOrThrow)
         .then(function (res) {
           sessionStorage.setItem('relampo_bearer', res.bearer);
-          window.location.href = '/events';
+          // primera pantalla tras el login: los eventos del usuario
+          window.location.href = '/manage';
         })
         .catch(function (e) { setStatus(String(e.message || e), true); });
     });
@@ -277,6 +280,7 @@ const appJSTemplate = `(function () {
     fetch('/api/events?catalogId=' + encodeURIComponent(cfg.catalogId), { headers: authHeaders() })
       .then(jsonOrThrow)
       .then(function (data) {
+        if (!data.events.length) { window.location.href = '/manage'; return Promise.reject(new Error('no events')); }
         var pick = data.events[Math.floor(Math.random() * data.events.length)];
         chosen.event = pick;
         el('evName').textContent = pick.name;

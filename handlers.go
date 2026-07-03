@@ -28,22 +28,15 @@ const (
 	correlationHeader = "X-Correlation-Id"
 )
 
-var eventCatalog = []struct {
-	Name  string
-	Venue string
-	Date  string
-}{
-	{"Noche de Rock Nacional", "Estadio Centenario", "2026-08-15"},
-	{"Clásico de Fútbol - Final", "Estadio Campeón del Siglo", "2026-08-22"},
-	{"Festival Electrónico Voltaje", "Rural del Prado", "2026-09-05"},
-	{"La Tormenta (teatro)", "Teatro Solís", "2026-09-12"},
-	{"Stand Up: Riendo Bajo la Lluvia", "Sala del Museo", "2026-09-19"},
-	{"Sinfónica: Beethoven 9", "Auditorio Nacional Sodre", "2026-10-03"},
-	{"Feria Gamer Expo", "Antel Arena", "2026-10-17"},
-	{"Jazz en el Puerto", "Teatro de Verano", "2026-10-24"},
-}
-
 // ---------------------------------------------------------------- helpers
+
+// pageData decorates template data with the nav flags: links only show when
+// logged in, and "comprar" only when the user has created events.
+func pageData(s *Session, extra map[string]any) map[string]any {
+	extra["LoggedIn"] = s != nil && s.User != ""
+	extra["HasEvents"] = s != nil && s.ownedCount() > 0
+	return extra
+}
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -180,7 +173,7 @@ func (app *App) home(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-store")
-	homeTmpl.Execute(w, map[string]any{"CSRF": s.CSRFToken})
+	homeTmpl.Execute(w, pageData(s, map[string]any{"CSRF": s.CSRFToken}))
 }
 
 // GET /static/app.js — served with an ETag so browsers revalidate with
@@ -198,7 +191,8 @@ func (app *App) staticAppJS(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(app.appJS))
 }
 
-// GET /events — página del catálogo; siembra catálogo y eventos por sesión.
+// GET /events — página de compra. El catálogo son los eventos creados por el
+// usuario: sin eventos propios no hay nada que comprar → va a /manage.
 func (app *App) eventsPage(w http.ResponseWriter, r *http.Request) {
 	s := app.requireSession(w, r)
 	if s == nil {
@@ -208,23 +202,13 @@ func (app *App) eventsPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusFound)
 		return
 	}
+	if s.ownedCount() == 0 {
+		http.Redirect(w, r, "/manage", http.StatusFound)
+		return
+	}
 	app.store.Lock()
 	if s.CatalogID == "" {
 		s.CatalogID = "CAT-" + randomHex(6)
-		for _, ec := range eventCatalog {
-			ev := &Event{
-				ID:    "EV-" + randomUUID(),
-				Name:  ec.Name,
-				Venue: ec.Venue,
-				Date:  ec.Date,
-			}
-			for row := 0; row < 3; row++ {
-				for n := 1; n <= 4; n++ {
-					ev.Seats = append(ev.Seats, fmt.Sprintf("S-%c%d-%s", 'A'+row, n, randomHex(3)))
-				}
-			}
-			s.Events = append(s.Events, ev)
-		}
 	}
 	s.Step = "browsing"
 	cfg, _ := json.Marshal(map[string]any{
@@ -235,10 +219,10 @@ func (app *App) eventsPage(w http.ResponseWriter, r *http.Request) {
 	app.store.Unlock()
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-store")
-	eventsTmpl.Execute(w, map[string]any{
+	eventsTmpl.Execute(w, pageData(s, map[string]any{
 		"User":       s.User,
 		"ConfigJSON": string(cfg),
-	})
+	}))
 }
 
 // GET /logout — invalida server-side; no emite Set-Cookie (la única cookie de
@@ -625,14 +609,14 @@ func (app *App) payCallback(w http.ResponseWriter, r *http.Request) {
 	ev := s.findEvent(res.EventID)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-store")
-	callbackTmpl.Execute(w, map[string]any{
+	callbackTmpl.Execute(w, pageData(s, map[string]any{
 		"ViewState":     pf.ViewState,
 		"Code":          pf.Code,
 		"ReservationID": res.ID,
 		"EventName":     ev.Name,
 		"SeatID":        res.SeatID,
 		"Price":         seatPrice(res.SeatID),
-	})
+	}))
 }
 
 // POST /pay/confirm — cierre del flujo: exige view_state + code + csrf_token
@@ -698,11 +682,11 @@ func (app *App) payConfirm(w http.ResponseWriter, r *http.Request) {
 	app.store.Unlock()
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-store")
-	successTmpl.Execute(w, map[string]any{
+	successTmpl.Execute(w, pageData(s, map[string]any{
 		"TicketID":      t.ID,
 		"ReceiptNumber": t.ReceiptNumber,
 		"EventName":     t.EventName,
 		"SeatID":        t.SeatID,
 		"User":          t.User,
-	})
+	}))
 }

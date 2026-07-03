@@ -12,6 +12,9 @@ import (
 // JSON body field) and optimistic locking (response ETag → If-Match header,
 // 428/412 on mistakes).
 
+// Regla de negocio: un usuario no puede tener más de 5 eventos a la vez.
+const maxEventsPerUser = 5
+
 func stripQuotes(s string) string {
 	return strings.Trim(s, `"`)
 }
@@ -32,7 +35,10 @@ func (app *App) managePage(w http.ResponseWriter, r *http.Request) {
 	app.store.Unlock()
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-store")
-	manageTmpl.Execute(w, map[string]any{"PublishToken": s.PublishToken})
+	manageTmpl.Execute(w, pageData(s, map[string]any{
+		"PublishToken": s.PublishToken,
+		"AtLimit":      s.ownedCount() >= maxEventsPerUser,
+	}))
 }
 
 // GET /api/manage/events — lista SOLO los eventos creados por el usuario.
@@ -90,6 +96,12 @@ func (app *App) apiManageCreate(w http.ResponseWriter, r *http.Request) {
 			"name, venue y date son obligatorios", "")
 		return
 	}
+	if s.ownedCount() >= maxEventsPerUser {
+		writeErr(w, r, http.StatusConflict, "events_limit",
+			fmt.Sprintf("límite alcanzado: un usuario no puede tener más de %d eventos; borra alguno para crear otro", maxEventsPerUser),
+			"usa DELETE /api/manage/events/{id} (con If-Match) para liberar lugar")
+		return
+	}
 	ev := &Event{
 		ID:    "EV-" + randomUUID(),
 		Name:  body.Name,
@@ -144,9 +156,9 @@ func (app *App) manageEditPage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Etag", `"`+ev.Rev+`"`)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-store")
-	editTmpl.Execute(w, map[string]any{
+	editTmpl.Execute(w, pageData(s, map[string]any{
 		"ID": ev.ID, "Name": ev.Name, "Venue": ev.Venue, "Date": ev.Date, "Rev": ev.Rev,
-	})
+	}))
 }
 
 func (app *App) checkIfMatch(w http.ResponseWriter, r *http.Request, ev *Event) bool {

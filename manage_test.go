@@ -171,4 +171,29 @@ func TestManageEventsFlow(t *testing.T) {
 	if resp.StatusCode != 200 || strings.Contains(body, created.Event.ID) {
 		t.Fatalf("el evento borrado sigue listado: %s", body)
 	}
+
+	// límite: un usuario no puede tener más de 5 eventos
+	for i := 0; i < 5; i++ {
+		_, body = do("GET", "/manage", "", nil)
+		tok := rx(`name="publish_token" value="([^"]+)"`, body, "publish_token")
+		resp, body = do("POST", "/api/manage/events",
+			fmt.Sprintf(`{"name":"Evento %d","venue":"Sala","date":"2026-12-1%d","publishToken":%q}`, i, i, tok),
+			authJSON)
+		if resp.StatusCode != 201 {
+			t.Fatalf("crear evento %d: %d %s", i, resp.StatusCode, body)
+		}
+	}
+	_, body = do("GET", "/manage", "", nil)
+	tok := rx(`name="publish_token" value="([^"]+)"`, body, "publish_token")
+	resp, body = do("POST", "/api/manage/events",
+		fmt.Sprintf(`{"name":"Sexto","venue":"Sala","date":"2026-12-20","publishToken":%q}`, tok),
+		authJSON)
+	if resp.StatusCode != 409 || !strings.Contains(body, "events_limit") {
+		t.Fatalf("el sexto evento debía dar 409 events_limit: %d %s", resp.StatusCode, body)
+	}
+	// la página de manage avisa del límite y oculta el formulario
+	_, body = do("GET", "/manage", "", nil)
+	if !strings.Contains(body, "limitNote") || !strings.Contains(body, `id="createForm" style="display:none"`) {
+		t.Fatalf("la página de manage no refleja el límite: %.300s", body)
+	}
 }

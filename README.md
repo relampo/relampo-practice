@@ -9,9 +9,15 @@ Un solo binario Go, **sin base de datos ni dependencias externas**: 500 usuarios
 hardcodeados, estado en memoria con TTL, todo el JavaScript servido desde la misma app
 (cero CDNs — funciona sin internet y el MITM captura el 100% del tráfico).
 
-Dos flujos de negocio: **comprar una entrada** (login → catálogo → reserva → gateway de
-pago → ticket) y **gestionar eventos propios** (crear → editar → borrar), encadenables:
-lo que creas en el segundo se puede comprar en el primero.
+Dos flujos de negocio encadenados: **gestionar eventos propios** (crear → editar →
+borrar, máximo **5 por usuario**) y **comprar una entrada** (catálogo → reserva →
+gateway de pago → ticket). El catálogo de compra son exactamente los eventos creados
+por el usuario, así que el flujo típico es: **login → crear evento → comprar entrada**.
+
+Reglas de UI: los links del menú (comprar / mis eventos / salir) solo aparecen con un
+usuario logueado; "comprar" solo cuando el usuario tiene eventos creados. Tras el
+login, la primera pantalla es **Mis eventos**: si no hay ninguno, el formulario de
+crear es lo primero que se ve.
 
 ## Cómo correrla
 
@@ -46,8 +52,9 @@ requests la exigen como header `Cookie`.
 [1]  GET  /                                → cookie única + csrf_token (HTML oculto)
 [2]  GET  /static/app.js                   → Etag (→ If-None-Match / 304)
 [3]  POST /api/auth                        → bearer JWT (JSON)
+     (requiere ≥1 evento creado: sin eventos, /events redirige a /manage)
 [4]  GET  /events                          → catalogId (JSON escapado en atributo HTML)
-[5]  GET  /api/events?catalogId=…          → array de eventos (elegir uno al azar)
+[5]  GET  /api/events?catalogId=…          → array con TUS eventos (elegir uno al azar)
 [6]  GET  /api/events/{id}/seats           → asientos + header X-Correlation-Id
 [7]  POST /api/reservations                → reservationId + relampo_token (valor A)
 [8]  POST /pay/start                       → 302 con state en Location  ⭐ exige valor B
@@ -72,8 +79,10 @@ requests la exigen como header `Cookie`.
 [20] DELETE /api/manage/events/{id}        → borra, también con If-Match
 ```
 
-Los eventos creados entran al catálogo de la sesión: el flujo 2 alimenta al flujo 1
-(puedes crear un evento y comprarle una entrada en la misma iteración).
+Los eventos creados SON el catálogo de compra: el flujo 2 alimenta al flujo 1
+(en cada iteración: crear evento → comprarle una entrada). Límite de negocio:
+**máximo 5 eventos por usuario** — el sexto `POST /api/manage/events` responde
+`409` con `variable: events_limit` (hay que borrar uno para liberar lugar).
 
 ## Mapa de correlación
 
