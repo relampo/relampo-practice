@@ -89,8 +89,6 @@ const headerHTML = `
 <header>
   <a class="logo" href="/"><span class="bolt">&#9889;</span>Relampo<span class="tag">Tickets</span></a>
   <nav>
-    <a href="/users.csv">users.csv</a>
-    <a href="/health">health</a>
     <a href="/logout">salir</a>
   </nav>
 </header>`
@@ -101,22 +99,20 @@ const footerHTML = `
 var homeTmpl = mustPage("home", `
 <body data-page="home">`+headerHTML+`
 <main>
-  <div class="badge">entorno de pr&aacute;ctica</div>
   <h1>Entradas para tus eventos, <span class="hl">a la velocidad del rayo</span></h1>
-  <p class="sub">Inici&aacute; sesi&oacute;n para comprar entradas. Este flujo est&aacute; dise&ntilde;ado para grabarse con el recorder MITM de Relampo y practicar correlaci&oacute;n de valores din&aacute;micos.</p>
+  <p class="sub">Inici&aacute; sesi&oacute;n para comprar entradas.</p>
   <div class="panel">
     <h2>Iniciar sesi&oacute;n</h2>
     <form id="loginForm">
       <input type="hidden" name="csrf_token" value="{{.CSRF}}">
       <label for="username">Usuario</label>
-      <input type="text" id="username" name="username" autocomplete="off" placeholder="user001">
+      <input type="text" id="username" name="username" autocomplete="off" placeholder="usuario">
       <label for="password">Contrase&ntilde;a</label>
-      <input type="password" id="password" name="password" placeholder="Pass001!">
+      <input type="password" id="password" name="password" placeholder="contrase&ntilde;a">
       <button type="submit">Entrar</button>
       <div id="status" class="status"></div>
     </form>
   </div>
-  <p class="note">Usuarios de prueba: <code>user001</code> &hellip; <code>user500</code> con contrase&ntilde;a <code>Pass001!</code> &hellip; <code>Pass500!</code>. Descarg&aacute; el data pool completo en <a href="/users.csv">/users.csv</a>.</p>
 </main>`+footerHTML+`
 <script src="/static/app.js"></script>
 </body>`)
@@ -140,11 +136,6 @@ var eventsTmpl = mustPage("events", `
   </div>
   <div class="panel" id="payBox" style="display:none">
     <h2>Pago seguro con RelampoPay</h2>
-    <p class="note">El token de reserva se firma en el navegador (HMAC-SHA256, ver <code>signRelampoToken()</code> en <a href="/static/app.js">app.js</a>) antes de enviarse. El servidor rechaza el token crudo.</p>
-    <dl class="kv" style="margin-top:12px">
-      <dt>relampo_token (A)</dt><dd><span class="tok" id="rawToken"></span></dd>
-      <dt>firmado (B)</dt><dd><span class="tok" id="signedToken"></span></dd>
-    </dl>
     <form id="payForm" method="POST" action="/pay/start">
       <input type="hidden" id="resvId" name="reservation_id" value="">
       <input type="hidden" id="relampoToken" name="relampo_token" value="">
@@ -183,7 +174,6 @@ var callbackTmpl = mustPage("callback", `
       <dt>Evento</dt><dd>{{.EventName}}</dd>
       <dt>Asiento</dt><dd>{{.SeatID}}</dd>
       <dt>Precio</dt><dd>$ {{.Price}}</dd>
-      <dt>Reserva</dt><dd>{{.ReservationID}}</dd>
     </dl>
     <form id="confirmForm" method="POST" action="/pay/confirm">
       <input type="hidden" name="view_state" value="{{.ViewState}}">
@@ -192,7 +182,6 @@ var callbackTmpl = mustPage("callback", `
       <input type="hidden" id="csrfField" name="csrf_token" value="">
       <button type="submit">Confirmar compra</button>
     </form>
-    <p class="note" style="margin-top:12px">El <code>csrf_token</code> de este formulario lo completa JavaScript con el valor emitido en la p&aacute;gina de inicio.</p>
   </div>
 </main>`+footerHTML+`
 <script src="/static/app.js"></script>
@@ -203,14 +192,13 @@ var successTmpl = mustPage("success", `
 <main>
   <div class="badge">compra confirmada</div>
   <div class="panel" style="text-align:center">
-    <div class="receipt">&#9889; {{.ReceiptNumber}}</div>
+    <div class="receipt">&#9889; Compra confirmada</div>
     <p class="sub">Tu entrada qued&oacute; emitida, {{.User}}.</p>
     <dl class="kv" style="text-align:left">
-      <dt>Ticket</dt><dd>{{.TicketID}}</dd>
       <dt>Evento</dt><dd>{{.EventName}}</dd>
       <dt>Asiento</dt><dd>{{.SeatID}}</dd>
     </dl>
-    <pre class="json" id="ticketInfo">Cargando detalle del ticket&hellip;</pre>
+    <p id="ticketInfo" class="status">Verificando tu entrada&hellip;</p>
     <a class="btn" href="/events">Comprar otra entrada</a>
   </div>
 </main>`+footerHTML+`

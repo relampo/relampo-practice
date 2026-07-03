@@ -148,7 +148,7 @@ const appJS = `(function () {
   function initEvents() {
     var cfg = JSON.parse(el('app').getAttribute('data-config'));
     var chosen = {};
-    setStatus('Cargando eventos del catalogo ' + cfg.catalogId + '…');
+    setStatus('Cargando eventos…');
     fetch('/api/events?catalogId=' + encodeURIComponent(cfg.catalogId), { headers: authHeaders() })
       .then(jsonOrThrow)
       .then(function (data) {
@@ -178,12 +178,9 @@ const appJS = `(function () {
       })
       .then(jsonOrThrow)
       .then(function (resv) {
-        setStatus('Reserva ' + resv.reservationId + ' creada. El token expira en ' + resv.tokenExpiresInSeconds + ' segundos.');
+        setStatus('Asiento reservado. Tenés 1 minuto para completar el pago.');
         el('resvId').value = resv.reservationId;
-        var signed = signRelampoToken(resv.relampoToken);
-        el('relampoToken').value = signed;
-        el('rawToken').textContent = resv.relampoToken;
-        el('signedToken').textContent = signed;
+        el('relampoToken').value = signRelampoToken(resv.relampoToken);
         el('payBox').style.display = 'block';
       })
       .catch(function (e) { setStatus(String(e.message || e), true); });
@@ -197,8 +194,8 @@ const appJS = `(function () {
     var ticketId = document.body.getAttribute('data-ticket');
     fetch('/api/tickets/' + ticketId, { headers: authHeaders() })
       .then(jsonOrThrow)
-      .then(function (t) { el('ticketInfo').textContent = JSON.stringify(t, null, 2); })
-      .catch(function (e) { el('ticketInfo').textContent = 'Error: ' + String(e.message || e); });
+      .then(function () { el('ticketInfo').textContent = 'Entrada verificada. Te la enviamos por correo.'; })
+      .catch(function (e) { el('ticketInfo').textContent = 'No pudimos verificar la entrada: ' + String(e.message || e); });
   }
 
   var page = document.body.getAttribute('data-page');
