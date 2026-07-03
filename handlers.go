@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"sync/atomic"
 	"time"
 )
@@ -65,6 +66,41 @@ func writeErr(w http.ResponseWriter, r *http.Request, status int, variable, msg,
 	writeJSON(w, status, body)
 }
 
+// preview truncates a value for error messages: enough to recognize what was
+// sent/expected without handing over the full answer.
+func preview(v string) string {
+	if v == "" {
+		return "(vacío o ausente)"
+	}
+	r := []rune(v)
+	if len(r) > 24 {
+		return string(r[:24]) + fmt.Sprintf("… (%d caracteres)", len(r))
+	}
+	return v
+}
+
+// writeCorrErr reports a failed correlation: the error states explicitly that
+// the correlated value is wrong and shows received vs expected previews.
+// Pass expected values raw; descriptive placeholders go in parentheses.
+func writeCorrErr(w http.ResponseWriter, r *http.Request, status int, variable, msg, hint, received, expected string) {
+	expShown := expected
+	if !strings.HasPrefix(expected, "(") {
+		expShown = preview(expected)
+	}
+	body := map[string]any{
+		"error":            "valor correlacionado incorrecto: " + msg,
+		"variable":         variable,
+		"correlationError": true,
+		"received":         preview(received),
+		"expected":         expShown,
+		"status":           status,
+	}
+	if hint != "" && r.Header.Get(hintsHeader) == "true" {
+		body["hint"] = hint
+	}
+	writeJSON(w, status, body)
+}
+
 func (app *App) session(r *http.Request) *Session {
 	c, err := r.Cookie(cookieName)
 	if err != nil {
@@ -98,15 +134,17 @@ func (app *App) requireBearer(w http.ResponseWriter, r *http.Request) *Session {
 	}
 	token := auth[len(prefix):]
 	if _, err := verifyJWT(token); err != nil {
-		writeErr(w, r, http.StatusUnauthorized, "bearer",
-			"token bearer inválido: "+err.Error(),
-			"correlaciona el valor exacto devuelto por POST /api/auth; no lo edites ni lo recortes")
+		writeCorrErr(w, r, http.StatusUnauthorized, "bearer",
+			"el token bearer enviado no es válido ("+err.Error()+")",
+			"correlaciona el valor exacto devuelto por POST /api/auth; no lo edites ni lo recortes",
+			token, s.Bearer)
 		return nil
 	}
 	if token != s.Bearer {
-		writeErr(w, r, http.StatusUnauthorized, "bearer",
-			"el token bearer no corresponde a esta sesión",
-			"cada sesión (cookie) recibe su propio bearer en POST /api/auth; no mezcles valores de otra sesión ni valores grabados")
+		writeCorrErr(w, r, http.StatusUnauthorized, "bearer",
+			"el token bearer enviado no corresponde al emitido para esta sesión",
+			"cada sesión (cookie) recibe su propio bearer en POST /api/auth; no mezcles valores de otra sesión ni valores grabados",
+			token, s.Bearer)
 		return nil
 	}
 	return s
@@ -274,9 +312,10 @@ func (app *App) apiEvents(w http.ResponseWriter, r *http.Request) {
 	}
 	catalogID := r.URL.Query().Get("catalogId")
 	if catalogID == "" || catalogID != s.CatalogID {
-		writeErr(w, r, http.StatusBadRequest, "catalog_id",
-			"catalogId ausente o inválido para esta sesión",
-			"extrae el catalogId del JSON escapado en el atributo data-config del div#app en GET /events (regex + unescape)")
+		writeCorrErr(w, r, http.StatusBadRequest, "catalog_id",
+			"el catalogId enviado no coincide con el emitido para esta sesión",
+			"extrae el catalogId del JSON escapado en el atributo data-config del div#app en GET /events (regex + unescape)",
+			catalogID, s.CatalogID)
 		return
 	}
 	type evJSON struct {
@@ -306,9 +345,10 @@ func (app *App) apiSeats(w http.ResponseWriter, r *http.Request) {
 	}
 	ev := s.findEvent(r.PathValue("id"))
 	if ev == nil {
-		writeErr(w, r, http.StatusNotFound, "event_id",
-			"evento inexistente en esta sesión",
-			"extrae un id del array $.events[*].id de GET /api/events (elige una ocurrencia aleatoria)")
+		writeCorrErr(w, r, http.StatusNotFound, "event_id",
+			"el event_id enviado en el path no corresponde a ningún evento de esta sesión",
+			"extrae un id del array $.events[*].id de GET /api/events (elige una ocurrencia aleatoria)",
+			r.PathValue("id"), "(uno de los id de $.events[*].id de GET /api/events)")
 		return
 	}
 	app.store.Lock()
@@ -340,9 +380,10 @@ func (app *App) apiReservations(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if got := r.Header.Get(correlationHeader); got == "" || got != s.CorrelationID {
-		writeErr(w, r, http.StatusForbidden, "x_correlation_id",
-			"header X-Correlation-Id ausente o no coincide",
-			"correlaciona el header X-Correlation-Id de la RESPUESTA de GET /api/events/{id}/seats y reenvíalo como header de este request")
+		writeCorrErr(w, r, http.StatusForbidden, "x_correlation_id",
+			"el header X-Correlation-Id enviado no coincide con el emitido en la respuesta de seats",
+			"correlaciona el header X-Correlation-Id de la RESPUESTA de GET /api/events/{id}/seats y reenvíalo como header de este request",
+			got, s.CorrelationID)
 		return
 	}
 	var body struct {
@@ -355,7 +396,9 @@ func (app *App) apiReservations(w http.ResponseWriter, r *http.Request) {
 	}
 	ev := s.findEvent(body.EventID)
 	if ev == nil {
-		writeErr(w, r, http.StatusBadRequest, "event_id", "eventId inválido", "")
+		writeCorrErr(w, r, http.StatusBadRequest, "event_id",
+			"el eventId enviado no corresponde a ningún evento de esta sesión", "",
+			body.EventID, "(uno de los id de $.events[*].id de GET /api/events)")
 		return
 	}
 	seatOK := false
@@ -366,9 +409,10 @@ func (app *App) apiReservations(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if !seatOK {
-		writeErr(w, r, http.StatusBadRequest, "seat_id",
-			"seatId no pertenece al evento",
-			"extrae un id del array $.seats[*].id de GET /api/events/{id}/seats")
+		writeCorrErr(w, r, http.StatusBadRequest, "seat_id",
+			"el seatId enviado no pertenece al evento",
+			"extrae un id del array $.seats[*].id de GET /api/events/{id}/seats",
+			body.SeatID, "(uno de los id de $.seats[*].id de GET /api/events/{id}/seats)")
 		return
 	}
 	res := &Reservation{
@@ -432,9 +476,10 @@ func (app *App) payStart(w http.ResponseWriter, r *http.Request) {
 	}
 	res := s.Reservations[r.PostFormValue("reservation_id")]
 	if res == nil {
-		writeErr(w, r, http.StatusNotFound, "reservation_id",
-			"reserva inexistente",
-			"correlaciona $.reservationId del JSON de POST /api/reservations")
+		writeCorrErr(w, r, http.StatusNotFound, "reservation_id",
+			"el reservation_id enviado no corresponde a ninguna reserva de esta sesión",
+			"correlaciona $.reservationId del JSON de POST /api/reservations",
+			r.PostFormValue("reservation_id"), "(el $.reservationId de POST /api/reservations)")
 		return
 	}
 	sent := r.PostFormValue("relampo_token")
@@ -442,13 +487,16 @@ func (app *App) payStart(w http.ResponseWriter, r *http.Request) {
 	if tokenMode == "hmac" {
 		hint = "el valor A viene en $.relampoToken de POST /api/reservations; debes enviar B = hex(HMAC-SHA256(A, 'relampo-public-salt-v1')) — mira signRelampoToken() en /static/app.js y reimpleméntala en tu herramienta"
 	}
+	expected := signRelampoToken(res.RelampoToken)
 	switch {
 	case sent == "":
-		writeErr(w, r, http.StatusBadRequest, "relampo_token", "falta relampo_token", hint)
+		writeCorrErr(w, r, http.StatusBadRequest, "relampo_token",
+			"falta el relampo_token transformado", hint, sent, expected)
 		return
 	case sent == res.RelampoToken:
-		writeErr(w, r, http.StatusForbidden, "relampo_token",
-			"enviaste el relampo_token CRUDO (valor A); el servidor solo acepta el valor transformado (B)", hint)
+		writeCorrErr(w, r, http.StatusForbidden, "relampo_token",
+			"enviaste el relampo_token CRUDO (valor A); el servidor solo acepta el valor transformado (B)",
+			hint, sent, expected)
 		return
 	case res.TokenUsed:
 		writeErr(w, r, http.StatusForbidden, "relampo_token",
@@ -458,9 +506,10 @@ func (app *App) payStart(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, r, http.StatusForbidden, "relampo_token",
 			"relampo_token expirado (TTL 60s); reduce el tiempo entre la reserva y el pago", hint)
 		return
-	case sent != signRelampoToken(res.RelampoToken):
-		writeErr(w, r, http.StatusForbidden, "relampo_token",
-			"la firma HMAC no coincide", hint)
+	case sent != expected:
+		writeCorrErr(w, r, http.StatusForbidden, "relampo_token",
+			"el valor transformado enviado no coincide con el esperado (revisa la transformación de signRelampoToken)",
+			hint, sent, expected)
 		return
 	}
 	pf := &PayFlow{
@@ -482,9 +531,10 @@ func (app *App) payStart(w http.ResponseWriter, r *http.Request) {
 func (app *App) payFlowByState(w http.ResponseWriter, r *http.Request, s *Session, state string) *PayFlow {
 	pf := s.PayFlows[state]
 	if pf == nil || time.Now().After(pf.Expires) {
-		writeErr(w, r, http.StatusForbidden, "state",
-			"state ausente, inválido o expirado",
-			"extrae state del header Location del 302 de POST /pay/start (regex sobre headers + url_decode)")
+		writeCorrErr(w, r, http.StatusForbidden, "state",
+			"el state enviado no coincide con ninguno vigente emitido para esta sesión",
+			"extrae state del header Location del 302 de POST /pay/start (regex sobre headers + url_decode)",
+			state, "(el state del Location del 302 de POST /pay/start, url-decodificado)")
 		return nil
 	}
 	return pf
@@ -532,9 +582,11 @@ func (app *App) payContinue(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if pf == nil {
-		writeErr(w, r, http.StatusForbidden, "request/x_correlation_id",
-			"los campos del formulario del gateway no coinciden",
-			"extrae los inputs ocultos 'request' y 'x_correlation_id' del HTML de GET /pay/authorize (2 regex) y envíalos como form body")
+		writeCorrErr(w, r, http.StatusForbidden, "request/x_correlation_id",
+			"los valores enviados no coinciden con los emitidos en el formulario del gateway",
+			"extrae los inputs ocultos 'request' y 'x_correlation_id' del HTML de GET /pay/authorize (2 regex) y envíalos como form body",
+			"request="+preview(reqBlob)+", x_correlation_id="+preview(xcorr),
+			"(los inputs ocultos del HTML de GET /pay/authorize)")
 		return
 	}
 	if time.Now().After(pf.Expires) {
@@ -560,9 +612,10 @@ func (app *App) payCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if code := r.URL.Query().Get("code"); code == "" || code != pf.Code {
-		writeErr(w, r, http.StatusForbidden, "code",
-			"code ausente o inválido",
-			"extrae code del header Location del 302 de POST /pay/continue (regex sobre headers)")
+		writeCorrErr(w, r, http.StatusForbidden, "code",
+			"el code enviado no coincide con el emitido para este flujo de pago",
+			"extrae code del header Location del 302 de POST /pay/continue (regex sobre headers)",
+			code, pf.Code)
 		return
 	}
 	app.store.Lock()
@@ -602,26 +655,31 @@ func (app *App) payConfirm(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if pf == nil {
-		writeErr(w, r, http.StatusForbidden, "code", "code inválido",
-			"extrae code del Location del 302 de POST /pay/continue")
+		writeCorrErr(w, r, http.StatusForbidden, "code",
+			"el code enviado no coincide con ningún flujo de pago vigente",
+			"extrae code del Location del 302 de POST /pay/continue",
+			code, "(el code del Location del 302 de POST /pay/continue)")
 		return
 	}
 	if vs := r.PostFormValue("view_state"); vs == "" || vs != pf.ViewState {
-		writeErr(w, r, http.StatusForbidden, "view_state",
-			"view_state ausente o no coincide",
-			"extrae el input oculto view_state del HTML de GET /pay/callback (regex; es un base64 largo)")
+		writeCorrErr(w, r, http.StatusForbidden, "view_state",
+			"el view_state enviado no coincide con el emitido en la página de confirmación",
+			"extrae el input oculto view_state del HTML de GET /pay/callback (regex; es un base64 largo)",
+			vs, pf.ViewState)
 		return
 	}
 	if csrf := r.PostFormValue("csrf_token"); csrf == "" || csrf != s.CSRFToken {
-		writeErr(w, r, http.StatusForbidden, "csrf_token",
-			"csrf_token ausente o no coincide",
-			"el csrf_token es el input oculto del formulario de login en GET / (el primer request del flujo); guárdalo hasta el final")
+		writeCorrErr(w, r, http.StatusForbidden, "csrf_token",
+			"el csrf_token enviado no coincide con el emitido al inicio de la sesión",
+			"el csrf_token es el input oculto del formulario de login en GET / (el primer request del flujo); guárdalo hasta el final",
+			csrf, s.CSRFToken)
 		return
 	}
 	res := s.Reservations[pf.ReservationID]
 	if r.PostFormValue("reservation_id") != res.ID {
-		writeErr(w, r, http.StatusForbidden, "reservation_id",
-			"reservation_id no coincide con el flujo de pago", "")
+		writeCorrErr(w, r, http.StatusForbidden, "reservation_id",
+			"el reservation_id enviado no coincide con el del flujo de pago", "",
+			r.PostFormValue("reservation_id"), res.ID)
 		return
 	}
 	ev := s.findEvent(res.EventID)

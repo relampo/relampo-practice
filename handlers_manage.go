@@ -75,9 +75,14 @@ func (app *App) apiManageCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if body.PublishToken == "" || body.PublishToken != s.PublishToken {
-		writeErr(w, r, http.StatusForbidden, "publish_token",
-			"publishToken ausente, inválido o ya usado (es de un solo uso)",
-			"extrae el input oculto publish_token del HTML de GET /manage (regex) y envíalo en el campo publishToken del body JSON; cada creación requiere volver a GET /manage")
+		expected := s.PublishToken
+		if expected == "" {
+			expected = "(ya consumido: es de un solo uso, vuelve a GET /manage para obtener otro)"
+		}
+		writeCorrErr(w, r, http.StatusForbidden, "publish_token",
+			"el publishToken enviado no coincide con el emitido en GET /manage",
+			"extrae el input oculto publish_token del HTML de GET /manage (regex) y envíalo en el campo publishToken del body JSON; cada creación requiere volver a GET /manage",
+			body.PublishToken, expected)
 		return
 	}
 	if body.Name == "" || body.Venue == "" || body.Date == "" {
@@ -112,9 +117,10 @@ func (app *App) apiManageCreate(w http.ResponseWriter, r *http.Request) {
 func (app *App) ownedEvent(w http.ResponseWriter, r *http.Request, s *Session) *Event {
 	ev := s.findEvent(r.PathValue("id"))
 	if ev == nil || !ev.Owned {
-		writeErr(w, r, http.StatusNotFound, "event_id",
-			"evento inexistente o no te pertenece",
-			"usa el id devuelto en $.event.id de POST /api/manage/events o en $.events[*].id de GET /api/manage/events")
+		writeCorrErr(w, r, http.StatusNotFound, "event_id",
+			"el event_id enviado no corresponde a un evento creado por este usuario",
+			"usa el id devuelto en $.event.id de POST /api/manage/events o en $.events[*].id de GET /api/manage/events",
+			r.PathValue("id"), "(el $.event.id devuelto por POST /api/manage/events)")
 		return nil
 	}
 	return ev
@@ -146,15 +152,17 @@ func (app *App) manageEditPage(w http.ResponseWriter, r *http.Request) {
 func (app *App) checkIfMatch(w http.ResponseWriter, r *http.Request, ev *Event) bool {
 	ifMatch := stripQuotes(r.Header.Get("If-Match"))
 	if ifMatch == "" {
-		writeErr(w, r, http.StatusPreconditionRequired, "if_match",
+		writeCorrErr(w, r, http.StatusPreconditionRequired, "if_match",
 			"falta el header If-Match con la rev vigente del evento",
-			"extrae la rev del header ETag de GET /manage/events/{id}/edit (regex sobre headers) o de $.event.rev y envíala como header If-Match")
+			"extrae la rev del header ETag de GET /manage/events/{id}/edit (regex sobre headers) o de $.event.rev y envíala como header If-Match",
+			ifMatch, ev.Rev)
 		return false
 	}
 	if ifMatch != ev.Rev {
-		writeErr(w, r, http.StatusPreconditionFailed, "if_match",
-			"la rev enviada en If-Match ya no es la vigente (el evento cambió); vuelve a leerlo",
-			"cada actualización devuelve una rev nueva en $.event.rev; correlaciona siempre la última, no reutilices valores viejos")
+		writeCorrErr(w, r, http.StatusPreconditionFailed, "if_match",
+			"la rev enviada en If-Match ya no es la vigente (el evento cambió); vuelve a leerlo y correlaciona la última",
+			"cada actualización devuelve una rev nueva en $.event.rev; correlaciona siempre la última, no reutilices valores viejos",
+			ifMatch, ev.Rev)
 		return false
 	}
 	return true

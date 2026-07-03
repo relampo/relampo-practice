@@ -148,11 +148,25 @@ Reglas del token (en ambos modos): **un solo uso** (reusarlo → 403) y **expira
 60 segundos** (scripts lentos o valores grabados → 403). Enviar el valor A crudo → 403
 con mensaje explícito.
 
-## Modo pista (para aprender)
+## Errores de correlación (para aprender)
 
-Todos los errores 4xx devuelven JSON con la `variable` que falló. Si además envías el
-header **`X-Practice-Hints: true`**, la respuesta incluye un campo `hint` que dice
-exactamente de dónde extraer el valor. Sin el header, el error es seco — como en producción.
+Cuando un valor correlacionado llega mal, el servidor responde un 4xx que lo dice
+explícitamente y muestra **lo que recibió vs lo que esperaba** (en vista previa
+truncada, suficiente para diagnosticar sin regalar el valor completo):
+
+```json
+{
+  "error": "valor correlacionado incorrecto: el catalogId enviado no coincide con el emitido para esta sesión",
+  "variable": "catalog_id",
+  "correlationError": true,
+  "received": "CAT-inventado",
+  "expected": "CAT-3982ca4dd1c9",
+  "status": 400
+}
+```
+
+Si además envías el header **`X-Practice-Hints: true`**, la respuesta incluye un campo
+`hint` que dice exactamente de dónde extraer el valor.
 
 ```bash
 curl -s -H "X-Practice-Hints: true" http://localhost:8080/api/events | jq
