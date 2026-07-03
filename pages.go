@@ -37,8 +37,15 @@ header {
 .logo { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; text-decoration: none; color: var(--text); }
 .logo .bolt { color: var(--accent); margin-right: 6px; }
 .logo .tag { color: var(--accent); }
+nav { display: flex; align-items: center; }
 nav a { color: var(--text-dim); text-decoration: none; margin-left: 18px; font-size: 14px; }
 nav a:hover { color: var(--accent); }
+.lang { margin-left: 22px; display: inline-flex; gap: 6px; }
+.lang a {
+  margin-left: 0; font-size: 12px; font-weight: 700; padding: 3px 9px;
+  border: 1px solid var(--border); border-radius: 6px; color: var(--text-dim);
+}
+.lang a.active { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 main { max-width: 860px; margin: 0 auto; padding: 40px 24px 80px; }
 h1 { font-size: 30px; letter-spacing: -0.5px; margin-bottom: 8px; }
 h1 .hl { color: var(--accent); }
@@ -89,29 +96,30 @@ const headerHTML = `
 <header>
   <a class="logo" href="/"><span class="bolt">&#9889;</span>Relampo<span class="tag">Tickets</span></a>
   <nav>
-    <a href="/events">comprar</a>
-    <a href="/manage">mis eventos</a>
-    <a href="/logout">salir</a>
+    <a href="/events" data-i18n="navBuy">comprar</a>
+    <a href="/manage" data-i18n="navManage">mis eventos</a>
+    <a href="/logout" data-i18n="navLogout">salir</a>
+    <span class="lang"><a href="#" data-setlang="es">ES</a><a href="#" data-setlang="en">EN</a></span>
   </nav>
 </header>`
 
 const footerHTML = `
-<footer>RelampoTickets &mdash; app de pr&aacute;ctica para correlaci&oacute;n en pruebas de performance</footer>`
+<footer data-i18n="footer">RelampoTickets &mdash; app de pr&aacute;ctica para correlaci&oacute;n en pruebas de performance</footer>`
 
 var homeTmpl = mustPage("home", `
 <body data-page="home">`+headerHTML+`
 <main>
-  <h1>Entradas para tus eventos, <span class="hl">a la velocidad del rayo</span></h1>
-  <p class="sub">Inici&aacute; sesi&oacute;n para comprar entradas.</p>
+  <h1><span data-i18n="homeTitle">Entradas para tus eventos,</span> <span class="hl" data-i18n="homeTitleHl">a la velocidad del rayo</span></h1>
+  <p class="sub" data-i18n="homeSub">Inici&aacute; sesi&oacute;n para comprar entradas.</p>
   <div class="panel">
-    <h2>Iniciar sesi&oacute;n</h2>
+    <h2 data-i18n="loginTitle">Iniciar sesi&oacute;n</h2>
     <form id="loginForm">
       <input type="hidden" name="csrf_token" value="{{.CSRF}}">
-      <label for="username">Usuario</label>
-      <input type="text" id="username" name="username" autocomplete="off" placeholder="usuario">
-      <label for="password">Contrase&ntilde;a</label>
-      <input type="password" id="password" name="password" placeholder="contrase&ntilde;a">
-      <button type="submit">Entrar</button>
+      <label for="username" data-i18n="userLabel">Usuario</label>
+      <input type="text" id="username" name="username" autocomplete="off" placeholder="usuario" data-i18n-ph="userPh">
+      <label for="password" data-i18n="passLabel">Contrase&ntilde;a</label>
+      <input type="password" id="password" name="password" placeholder="contrase&ntilde;a" data-i18n-ph="passPh">
+      <button type="submit" data-i18n="loginBtn">Entrar</button>
       <div id="status" class="status"></div>
     </form>
   </div>
@@ -122,26 +130,26 @@ var homeTmpl = mustPage("home", `
 var eventsTmpl = mustPage("events", `
 <body data-page="events">`+headerHTML+`
 <main>
-  <h1>Eleg&iacute; tu <span class="hl">evento</span></h1>
-  <p class="sub">Hola <strong>{{.User}}</strong>. La app elige un evento y un asiento al azar, reserva, y te deja listo el pago.</p>
+  <h1><span data-i18n="eventsTitle">Eleg&iacute; tu</span> <span class="hl" data-i18n="eventsTitleHl">evento</span></h1>
+  <p class="sub"><span data-i18n="eventsHello">Hola</span> <strong>{{.User}}</strong>. <span data-i18n="eventsSub">La app elige un evento y un asiento al azar, reserva, y te deja listo el pago.</span></p>
   <div id="app" data-config="{{.ConfigJSON}}"></div>
   <div class="panel">
-    <h2>Tu selecci&oacute;n</h2>
+    <h2 data-i18n="selTitle">Tu selecci&oacute;n</h2>
     <dl class="kv">
-      <dt>Evento</dt><dd id="evName">&mdash;</dd>
-      <dt>Lugar</dt><dd id="evVenue">&mdash;</dd>
-      <dt>Fecha</dt><dd id="evDate">&mdash;</dd>
-      <dt>Asiento</dt><dd id="seatId">&mdash;</dd>
-      <dt>Precio</dt><dd id="seatPrice">&mdash;</dd>
+      <dt data-i18n="kvEvent">Evento</dt><dd id="evName">&mdash;</dd>
+      <dt data-i18n="kvVenue">Lugar</dt><dd id="evVenue">&mdash;</dd>
+      <dt data-i18n="kvDate">Fecha</dt><dd id="evDate">&mdash;</dd>
+      <dt data-i18n="kvSeat">Asiento</dt><dd id="seatId">&mdash;</dd>
+      <dt data-i18n="kvPrice">Precio</dt><dd id="seatPrice">&mdash;</dd>
     </dl>
-    <div id="status" class="status">Cargando&hellip;</div>
+    <div id="status" class="status">&hellip;</div>
   </div>
   <div class="panel" id="payBox" style="display:none">
-    <h2>Pago seguro con RelampoPay</h2>
+    <h2 data-i18n="payTitle">Pago seguro con RelampoPay</h2>
     <form id="payForm" method="POST" action="/pay/start">
       <input type="hidden" id="resvId" name="reservation_id" value="">
       <input type="hidden" id="relampoToken" name="relampo_token" value="">
-      <button type="submit">Pagar ahora</button>
+      <button type="submit" data-i18n="payBtn">Pagar ahora</button>
     </form>
   </div>
 </main>`+footerHTML+`
@@ -151,25 +159,25 @@ var eventsTmpl = mustPage("events", `
 var manageTmpl = mustPage("manage", `
 <body data-page="manage">`+headerHTML+`
 <main>
-  <h1>Mis <span class="hl">eventos</span></h1>
-  <p class="sub">Cre&aacute; tus propios eventos: aparecen en el cat&aacute;logo y se pueden comprar.</p>
+  <h1><span data-i18n="manageTitle">Mis</span> <span class="hl" data-i18n="manageTitleHl">eventos</span></h1>
+  <p class="sub" data-i18n="manageSub">Cre&aacute; tus propios eventos: aparecen en el cat&aacute;logo y se pueden comprar.</p>
   <div class="panel">
-    <h2>Crear evento</h2>
+    <h2 data-i18n="createTitle">Crear evento</h2>
     <form id="createForm">
       <input type="hidden" name="publish_token" value="{{.PublishToken}}">
-      <label for="evname">Nombre</label>
-      <input type="text" id="evname" autocomplete="off" placeholder="Festival de Invierno">
-      <label for="evvenue">Lugar</label>
-      <input type="text" id="evvenue" autocomplete="off" placeholder="Teatro Principal">
-      <label for="evdate">Fecha</label>
+      <label for="evname" data-i18n="nameLabel">Nombre</label>
+      <input type="text" id="evname" autocomplete="off" placeholder="Festival de Invierno" data-i18n-ph="namePh">
+      <label for="evvenue" data-i18n="venueLabel">Lugar</label>
+      <input type="text" id="evvenue" autocomplete="off" placeholder="Teatro Principal" data-i18n-ph="venuePh">
+      <label for="evdate" data-i18n="dateLabel">Fecha</label>
       <input type="text" id="evdate" autocomplete="off" placeholder="2026-12-01">
-      <button type="submit">Publicar evento</button>
+      <button type="submit" data-i18n="publishBtn">Publicar evento</button>
       <div id="status" class="status"></div>
     </form>
   </div>
   <div class="panel">
-    <h2>Eventos publicados</h2>
-    <div id="myEvents" class="note">Cargando&hellip;</div>
+    <h2 data-i18n="publishedTitle">Eventos publicados</h2>
+    <div id="myEvents" class="note">&hellip;</div>
   </div>
 </main>`+footerHTML+`
 <script src="/static/app.js"></script>
@@ -178,20 +186,20 @@ var manageTmpl = mustPage("manage", `
 var editTmpl = mustPage("edit", `
 <body data-page="edit">`+headerHTML+`
 <main>
-  <h1>Editar <span class="hl">evento</span></h1>
+  <h1><span data-i18n="editTitle">Editar</span> <span class="hl" data-i18n="editTitleHl">evento</span></h1>
   <div class="panel">
     <h2>{{.Name}}</h2>
     <form id="editForm">
       <input type="hidden" id="eventId" value="{{.ID}}">
       <input type="hidden" id="eventRev" name="rev" value="{{.Rev}}">
-      <label for="evname">Nombre</label>
+      <label for="evname" data-i18n="nameLabel">Nombre</label>
       <input type="text" id="evname" value="{{.Name}}">
-      <label for="evvenue">Lugar</label>
+      <label for="evvenue" data-i18n="venueLabel">Lugar</label>
       <input type="text" id="evvenue" value="{{.Venue}}">
-      <label for="evdate">Fecha</label>
+      <label for="evdate" data-i18n="dateLabel">Fecha</label>
       <input type="text" id="evdate" value="{{.Date}}">
-      <button type="submit">Guardar cambios</button>
-      <a class="btn" style="background:transparent;color:var(--text-dim);border:1px solid var(--border)" href="/manage">Cancelar</a>
+      <button type="submit" data-i18n="saveBtn">Guardar cambios</button>
+      <a class="btn" style="background:transparent;color:var(--text-dim);border:1px solid var(--border)" href="/manage" data-i18n="cancelBtn">Cancelar</a>
       <div id="status" class="status"></div>
     </form>
   </div>
@@ -205,11 +213,11 @@ var authorizeTmpl = mustPage("authorize", `
   <div class="panel" style="margin-top:60px;text-align:center">
     <div class="badge">RelampoPay</div>
     <h2>Redirigiendo al procesador de pagos&hellip;</h2>
-    <p class="note" style="margin-top:10px">No cierres esta ventana.</p>
+    <p class="note" style="margin-top:10px">Redirecting to the payment processor&hellip;</p>
     <form id="payform" method="POST" action="/pay/continue">
       <input type="hidden" name="request" value="{{.Request}}">
       <input type="hidden" name="x_correlation_id" value="{{.XCorr}}">
-      <noscript><button type="submit">Continuar</button></noscript>
+      <noscript><button type="submit">Continuar / Continue</button></noscript>
     </form>
   </div>
 </main>
@@ -219,21 +227,21 @@ var authorizeTmpl = mustPage("authorize", `
 var callbackTmpl = mustPage("callback", `
 <body data-page="callback">`+headerHTML+`
 <main>
-  <div class="badge">RelampoPay &mdash; confirmaci&oacute;n</div>
-  <h1>Revis&aacute; tu <span class="hl">compra</span></h1>
+  <div class="badge" data-i18n="cbBadge">RelampoPay &mdash; confirmaci&oacute;n</div>
+  <h1><span data-i18n="cbTitle">Revis&aacute; tu</span> <span class="hl" data-i18n="cbTitleHl">compra</span></h1>
   <div class="panel">
-    <h2>Resumen</h2>
+    <h2 data-i18n="summary">Resumen</h2>
     <dl class="kv">
-      <dt>Evento</dt><dd>{{.EventName}}</dd>
-      <dt>Asiento</dt><dd>{{.SeatID}}</dd>
-      <dt>Precio</dt><dd>$ {{.Price}}</dd>
+      <dt data-i18n="kvEvent">Evento</dt><dd>{{.EventName}}</dd>
+      <dt data-i18n="kvSeat">Asiento</dt><dd>{{.SeatID}}</dd>
+      <dt data-i18n="kvPrice">Precio</dt><dd>$ {{.Price}}</dd>
     </dl>
     <form id="confirmForm" method="POST" action="/pay/confirm">
       <input type="hidden" name="view_state" value="{{.ViewState}}">
       <input type="hidden" name="code" value="{{.Code}}">
       <input type="hidden" name="reservation_id" value="{{.ReservationID}}">
       <input type="hidden" id="csrfField" name="csrf_token" value="">
-      <button type="submit">Confirmar compra</button>
+      <button type="submit" data-i18n="confirmBtn">Confirmar compra</button>
     </form>
   </div>
 </main>`+footerHTML+`
@@ -243,16 +251,16 @@ var callbackTmpl = mustPage("callback", `
 var successTmpl = mustPage("success", `
 <body data-page="success" data-ticket="{{.TicketID}}">`+headerHTML+`
 <main>
-  <div class="badge">compra confirmada</div>
+  <div class="badge" data-i18n="successBadge">compra confirmada</div>
   <div class="panel" style="text-align:center">
-    <div class="receipt">&#9889; Compra confirmada</div>
-    <p class="sub">Tu entrada qued&oacute; emitida, {{.User}}.</p>
+    <div class="receipt">&#9889; <span data-i18n="successBig">Compra confirmada</span></div>
+    <p class="sub"><span data-i18n="successSub">Tu entrada qued&oacute; emitida,</span> {{.User}}.</p>
     <dl class="kv" style="text-align:left">
-      <dt>Evento</dt><dd>{{.EventName}}</dd>
-      <dt>Asiento</dt><dd>{{.SeatID}}</dd>
+      <dt data-i18n="kvEvent">Evento</dt><dd>{{.EventName}}</dd>
+      <dt data-i18n="kvSeat">Asiento</dt><dd>{{.SeatID}}</dd>
     </dl>
-    <p id="ticketInfo" class="status">Verificando tu entrada&hellip;</p>
-    <a class="btn" href="/events">Comprar otra entrada</a>
+    <p id="ticketInfo" class="status">&hellip;</p>
+    <a class="btn" href="/events" data-i18n="buyAnother">Comprar otra entrada</a>
   </div>
 </main>`+footerHTML+`
 <script src="/static/app.js"></script>

@@ -124,6 +124,113 @@ const appJSTemplate = `(function () {
     return TOKEN_MODE === 'hmac' ? hmacSha256Hex(RELAMPO_SALT, tokenA) : xorSignToken(tokenA);
   }
 
+  // ------------------------------------------------------------ idioma
+  // Switch visual ES/EN, 100% del lado del cliente: la preferencia vive en
+  // sessionStorage y NO viaja en ningun request (no afecta la correlacion).
+  var I18N = {
+    es: {
+      navBuy: 'comprar', navManage: 'mis eventos', navLogout: 'salir',
+      footer: 'RelampoTickets — app de práctica para correlación en pruebas de performance',
+      homeTitle: 'Entradas para tus eventos,', homeTitleHl: 'a la velocidad del rayo',
+      homeSub: 'Iniciá sesión para comprar entradas.',
+      loginTitle: 'Iniciar sesión', userLabel: 'Usuario', passLabel: 'Contraseña',
+      userPh: 'usuario', passPh: 'contraseña', loginBtn: 'Entrar',
+      eventsTitle: 'Elegí tu', eventsTitleHl: 'evento', eventsHello: 'Hola',
+      eventsSub: 'La app elige un evento y un asiento al azar, reserva, y te deja listo el pago.',
+      selTitle: 'Tu selección', kvEvent: 'Evento', kvVenue: 'Lugar', kvDate: 'Fecha',
+      kvSeat: 'Asiento', kvPrice: 'Precio',
+      payTitle: 'Pago seguro con RelampoPay', payBtn: 'Pagar ahora',
+      manageTitle: 'Mis', manageTitleHl: 'eventos',
+      manageSub: 'Creá tus propios eventos: aparecen en el catálogo y se pueden comprar.',
+      createTitle: 'Crear evento', nameLabel: 'Nombre', venueLabel: 'Lugar', dateLabel: 'Fecha',
+      namePh: 'Festival de Invierno', venuePh: 'Teatro Principal',
+      publishBtn: 'Publicar evento', publishedTitle: 'Eventos publicados',
+      editTitle: 'Editar', editTitleHl: 'evento', saveBtn: 'Guardar cambios', cancelBtn: 'Cancelar',
+      cbBadge: 'RelampoPay — confirmación', cbTitle: 'Revisá tu', cbTitleHl: 'compra',
+      summary: 'Resumen', confirmBtn: 'Confirmar compra',
+      successBadge: 'compra confirmada', successBig: 'Compra confirmada',
+      successSub: 'Tu entrada quedó emitida,', buyAnother: 'Comprar otra entrada',
+      jsLoadingEvents: 'Cargando eventos…',
+      jsReserved: 'Asiento reservado. Tenés 1 minuto para completar el pago.',
+      jsVerifying: 'Verificando tu entrada…',
+      jsVerified: 'Entrada verificada. Te la enviamos por correo.',
+      jsVerifyFail: 'No pudimos verificar la entrada: ',
+      jsNoEvents: 'Todavía no publicaste eventos.',
+      jsEdit: 'editar', jsDelete: 'borrar', jsLoading: 'Cargando…'
+    },
+    en: {
+      navBuy: 'buy tickets', navManage: 'my events', navLogout: 'logout',
+      footer: 'RelampoTickets — practice app for correlation in performance testing',
+      homeTitle: 'Tickets for your events,', homeTitleHl: 'at lightning speed',
+      homeSub: 'Sign in to buy tickets.',
+      loginTitle: 'Sign in', userLabel: 'Username', passLabel: 'Password',
+      userPh: 'username', passPh: 'password', loginBtn: 'Sign in',
+      eventsTitle: 'Choose your', eventsTitleHl: 'event', eventsHello: 'Hi',
+      eventsSub: 'The app picks a random event and seat, reserves it, and gets your payment ready.',
+      selTitle: 'Your selection', kvEvent: 'Event', kvVenue: 'Venue', kvDate: 'Date',
+      kvSeat: 'Seat', kvPrice: 'Price',
+      payTitle: 'Secure payment with RelampoPay', payBtn: 'Pay now',
+      manageTitle: 'My', manageTitleHl: 'events',
+      manageSub: 'Create your own events: they join the catalog and can be purchased.',
+      createTitle: 'Create event', nameLabel: 'Name', venueLabel: 'Venue', dateLabel: 'Date',
+      namePh: 'Winter Festival', venuePh: 'Main Theater',
+      publishBtn: 'Publish event', publishedTitle: 'Published events',
+      editTitle: 'Edit', editTitleHl: 'event', saveBtn: 'Save changes', cancelBtn: 'Cancel',
+      cbBadge: 'RelampoPay — confirmation', cbTitle: 'Review your', cbTitleHl: 'purchase',
+      summary: 'Summary', confirmBtn: 'Confirm purchase',
+      successBadge: 'purchase confirmed', successBig: 'Purchase confirmed',
+      successSub: 'Your ticket has been issued,', buyAnother: 'Buy another ticket',
+      jsLoadingEvents: 'Loading events…',
+      jsReserved: 'Seat reserved. You have 1 minute to complete the payment.',
+      jsVerifying: 'Verifying your ticket…',
+      jsVerified: 'Ticket verified. We emailed it to you.',
+      jsVerifyFail: 'We could not verify your ticket: ',
+      jsNoEvents: 'You have not published any events yet.',
+      jsEdit: 'edit', jsDelete: 'delete', jsLoading: 'Loading…'
+    }
+  };
+
+  function curLang() {
+    var l = sessionStorage.getItem('relampo_lang');
+    return l === 'en' ? 'en' : 'es';
+  }
+
+  function t(key) {
+    var d = I18N[curLang()];
+    return (d && d[key]) || I18N.es[key] || key;
+  }
+
+  function applyLang() {
+    var lang = curLang();
+    document.documentElement.lang = lang;
+    var nodes = document.querySelectorAll('[data-i18n]');
+    for (var i = 0; i < nodes.length; i++) {
+      var key = nodes[i].getAttribute('data-i18n');
+      if (I18N[lang][key]) nodes[i].textContent = I18N[lang][key];
+    }
+    var phs = document.querySelectorAll('[data-i18n-ph]');
+    for (i = 0; i < phs.length; i++) {
+      var pk = phs[i].getAttribute('data-i18n-ph');
+      if (I18N[lang][pk]) phs[i].setAttribute('placeholder', I18N[lang][pk]);
+    }
+    var sw = document.querySelectorAll('[data-setlang]');
+    for (i = 0; i < sw.length; i++) {
+      sw[i].className = sw[i].getAttribute('data-setlang') === lang ? 'active' : '';
+    }
+  }
+
+  function initLangSwitch() {
+    var sw = document.querySelectorAll('[data-setlang]');
+    for (var i = 0; i < sw.length; i++) {
+      sw[i].addEventListener('click', function (ev) {
+        ev.preventDefault();
+        sessionStorage.setItem('relampo_lang', this.getAttribute('data-setlang'));
+        applyLang();
+      });
+    }
+    applyLang();
+  }
+
   function el(id) { return document.getElementById(id); }
 
   function setStatus(msg, isErr) {
@@ -166,7 +273,7 @@ const appJSTemplate = `(function () {
   function initEvents() {
     var cfg = JSON.parse(el('app').getAttribute('data-config'));
     var chosen = {};
-    setStatus('Cargando eventos…');
+    setStatus(t('jsLoadingEvents'));
     fetch('/api/events?catalogId=' + encodeURIComponent(cfg.catalogId), { headers: authHeaders() })
       .then(jsonOrThrow)
       .then(function (data) {
@@ -196,7 +303,7 @@ const appJSTemplate = `(function () {
       })
       .then(jsonOrThrow)
       .then(function (resv) {
-        setStatus('Asiento reservado. Tenés 1 minuto para completar el pago.');
+        setStatus(t('jsReserved'));
         el('resvId').value = resv.reservationId;
         el('relampoToken').value = signRelampoToken(resv.relampoToken);
         el('payBox').style.display = 'block';
@@ -233,7 +340,7 @@ const appJSTemplate = `(function () {
       .then(jsonOrThrow)
       .then(function (data) {
         var box = el('myEvents');
-        if (data.events.length === 0) { box.textContent = 'Todavía no publicaste eventos.'; return; }
+        if (data.events.length === 0) { box.textContent = t('jsNoEvents'); return; }
         box.textContent = '';
         data.events.forEach(function (evt) {
           var row = document.createElement('div');
@@ -243,11 +350,11 @@ const appJSTemplate = `(function () {
           var actions = document.createElement('span');
           var edit = document.createElement('a');
           edit.href = '/manage/events/' + evt.id + '/edit';
-          edit.textContent = 'editar';
+          edit.textContent = t('jsEdit');
           edit.style.cssText = 'color:var(--accent);margin-right:14px';
           var del = document.createElement('a');
           del.href = '#';
-          del.textContent = 'borrar';
+          del.textContent = t('jsDelete');
           del.style.color = 'var(--err)';
           del.addEventListener('click', function (clickEv) {
             clickEv.preventDefault();
@@ -294,11 +401,14 @@ const appJSTemplate = `(function () {
 
   function initSuccess() {
     var ticketId = document.body.getAttribute('data-ticket');
+    el('ticketInfo').textContent = t('jsVerifying');
     fetch('/api/tickets/' + ticketId, { headers: authHeaders() })
       .then(jsonOrThrow)
-      .then(function () { el('ticketInfo').textContent = 'Entrada verificada. Te la enviamos por correo.'; })
-      .catch(function (e) { el('ticketInfo').textContent = 'No pudimos verificar la entrada: ' + String(e.message || e); });
+      .then(function () { el('ticketInfo').textContent = t('jsVerified'); })
+      .catch(function (e) { el('ticketInfo').textContent = t('jsVerifyFail') + String(e.message || e); });
   }
+
+  initLangSwitch();
 
   var page = document.body.getAttribute('data-page');
   if (page === 'home') initHome();
