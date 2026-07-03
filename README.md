@@ -157,6 +157,21 @@ Reglas del token (en ambos modos): **un solo uso** (reusarlo → 403) y **expira
 60 segundos** (scripts lentos o valores grabados → 403). Enviar el valor A crudo → 403
 con mensaje explícito.
 
+## Límite de carga: 5 sesiones concurrentes por nodo (IP)
+
+Cada usuario virtual abre una sesión en `GET /`. Un mismo nodo de carga (una IP,
+una máquina) admite **máximo 5 sesiones vivas a la vez**; la sexta recibe **429**
+con `variable: vus_per_node`. Con la ejecución distribuida de Relampo (4 nodos),
+el máximo natural es 4 × 5 = 20 VUs.
+
+No hace falta desloguearse para liberar cupos: si un script se corta sin
+`/logout`, sus sesiones quedan "zombis" (dejan de hacer requests) y el servidor
+las desaloja automáticamente cuando el mismo nodo necesita el lugar (tras ~90 s
+de inactividad). `GET /logout` lo libera al instante (buena práctica del flujo).
+
+Configurable con `RELAMPO_MAX_SESSIONS_PER_IP` (default 5; `0` = sin límite).
+Detrás de un proxy/App Runner, la IP se toma del header `X-Forwarded-For`.
+
 ## Errores de correlación (para aprender)
 
 Cuando un valor correlacionado llega mal, el servidor responde un 4xx que lo dice

@@ -54,6 +54,7 @@ type Event struct {
 // Session is all server-side state bound to the single relampo_session cookie.
 type Session struct {
 	ID            string
+	IP            string
 	CreatedAt     time.Time
 	LastSeen      time.Time
 	Step          string
@@ -115,9 +116,10 @@ func (st *Store) janitor() {
 	}
 }
 
-func (st *Store) Create() *Session {
+func (st *Store) Create(ip string) *Session {
 	s := &Session{
 		ID:           randomHex(32),
+		IP:           ip,
 		CreatedAt:    time.Now(),
 		LastSeen:     time.Now(),
 		Step:         "home",
@@ -130,6 +132,44 @@ func (st *Store) Create() *Session {
 	st.sessions[s.ID] = s
 	st.mu.Unlock()
 	return s
+}
+
+// CountByIP returns the number of live sessions bound to one source IP
+// (one Relampo load node = one IP = one local machine).
+func (st *Store) CountByIP(ip string) int {
+	st.mu.Lock()
+	defer st.mu.Unlock()
+	n := 0
+	for _, s := range st.sessions {
+		if s.IP == ip {
+			n++
+		}
+	}
+	return n
+}
+
+// ReclaimIdle evicts the longest-idle "zombie" session of an IP — one that
+// stopped making requests at least idleFor ago (an abandoned VU: script
+// killed without /logout). Returns true if a slot was freed. Active sessions
+// are never evicted: a running VU issues requests every few seconds.
+func (st *Store) ReclaimIdle(ip string, idleFor time.Duration) bool {
+	st.mu.Lock()
+	defer st.mu.Unlock()
+	var victim *Session
+	cutoff := time.Now().Add(-idleFor)
+	for _, s := range st.sessions {
+		if s.IP != ip || s.LastSeen.After(cutoff) {
+			continue
+		}
+		if victim == nil || s.LastSeen.Before(victim.LastSeen) {
+			victim = s
+		}
+	}
+	if victim == nil {
+		return false
+	}
+	delete(st.sessions, victim.ID)
+	return true
 }
 
 func (st *Store) Get(id string) *Session {

@@ -26,7 +26,29 @@ const (
 	bearerTTL         = 2 * time.Hour
 	hintsHeader       = "X-Practice-Hints"
 	correlationHeader = "X-Correlation-Id"
+	zombieIdleAfter   = 90 * time.Second
 )
+
+// maxSessionsPerIP: cuántas sesiones concurrentes admite un mismo nodo de
+// carga (una IP / una máquina). Configurable con RELAMPO_MAX_SESSIONS_PER_IP
+// (0 = sin límite).
+var maxSessionsPerIP = 5
+
+// clientIP resolves the source IP: first hop of X-Forwarded-For when behind
+// a proxy/App Runner, otherwise the socket's remote address.
+func clientIP(r *http.Request) string {
+	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		if i := strings.IndexByte(xff, ','); i > 0 {
+			return strings.TrimSpace(xff[:i])
+		}
+		return strings.TrimSpace(xff)
+	}
+	host := r.RemoteAddr
+	if i := strings.LastIndexByte(host, ':'); i > 0 {
+		host = host[:i]
+	}
+	return strings.Trim(host, "[]")
+}
 
 // ---------------------------------------------------------------- helpers
 
@@ -162,7 +184,18 @@ func (app *App) home(w http.ResponseWriter, r *http.Request) {
 	}
 	s := app.session(r)
 	if s == nil {
-		s = app.store.Create()
+		ip := clientIP(r)
+		if maxSessionsPerIP > 0 && app.store.CountByIP(ip) >= maxSessionsPerIP {
+			// antes de rechazar, intenta desalojar una sesión zombi de este
+			// mismo nodo (VU abandonado sin /logout)
+			if !app.store.ReclaimIdle(ip, zombieIdleAfter) {
+				writeErr(w, r, http.StatusTooManyRequests, "vus_per_node",
+					fmt.Sprintf("límite alcanzado: máximo %d sesiones concurrentes por nodo (IP); cierra sesiones con GET /logout o espera a que queden inactivas", maxSessionsPerIP),
+					"cada usuario virtual abre una sesión en GET /; usa como máximo 5 VUs por nodo de carga y termina el flujo con /logout para liberar el cupo al instante")
+				return
+			}
+		}
+		s = app.store.Create(ip)
 		http.SetCookie(w, &http.Cookie{
 			Name:     cookieName,
 			Value:    s.ID,

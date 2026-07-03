@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -66,6 +67,11 @@ func main() {
 	if m := os.Getenv("RELAMPO_TOKEN_MODE"); m == "hmac" || m == "simple" {
 		tokenMode = m
 	}
+	if v := os.Getenv("RELAMPO_MAX_SESSIONS_PER_IP"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n >= 0 {
+			maxSessionsPerIP = n
+		}
+	}
 	app := &App{
 		store:     NewStore(30 * time.Minute),
 		startedAt: time.Now(),
@@ -75,5 +81,8 @@ func main() {
 	fmt.Printf("⚡ RelampoTickets — app de práctica para correlación\n")
 	fmt.Printf("   http://localhost:%s  (usuarios: user001…user%03d / Pass001!…Pass%03d!)\n", port, userCount, userCount)
 	fmt.Printf("   relampo_token: modo %s (RELAMPO_TOKEN_MODE=simple|hmac)\n", tokenMode)
+	if maxSessionsPerIP > 0 {
+		fmt.Printf("   límite: %d sesiones concurrentes por nodo/IP (RELAMPO_MAX_SESSIONS_PER_IP)\n", maxSessionsPerIP)
+	}
 	log.Fatal(http.ListenAndServe(addr, withLogging(newMux(app))))
 }
