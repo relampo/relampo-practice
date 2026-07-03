@@ -191,6 +191,16 @@ func (app *App) staticAppJS(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(app.appJS))
 }
 
+// faviconSVG: rayo amarillo sobre fondo oscuro, a juego con la marca Relampo.
+const faviconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#0b0f1a"/><polygon points="35,5 8,37 30,37 29,59 56,27 33,27" fill="#ffd60a"/></svg>`
+
+// GET /favicon.svg — servido desde la app (nada externo).
+func (app *App) favicon(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "image/svg+xml")
+	w.Header().Set("Cache-Control", "public, max-age=86400")
+	w.Write([]byte(faviconSVG))
+}
+
 // GET /events — página de compra. El catálogo son los eventos creados por el
 // usuario: sin eventos propios no hay nada que comprar → va a /manage.
 func (app *App) eventsPage(w http.ResponseWriter, r *http.Request) {

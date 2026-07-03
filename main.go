@@ -12,6 +12,7 @@ func newMux(app *App) *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /", app.home)
 	mux.HandleFunc("GET /static/app.js", app.staticAppJS)
+	mux.HandleFunc("GET /favicon.svg", app.favicon)
 	mux.HandleFunc("GET /health", app.health)
 	mux.HandleFunc("GET /debug/sessions", app.debugSessions)
 	mux.HandleFunc("GET /events", app.eventsPage)
