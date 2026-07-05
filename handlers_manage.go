@@ -77,29 +77,29 @@ func (app *App) apiManageCreate(w http.ResponseWriter, r *http.Request) {
 		PublishToken string `json:"publishToken"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeErr(w, r, http.StatusBadRequest, "body", "body JSON inválido", "")
+		writeErr(w, r, http.StatusBadRequest, "body", "invalid JSON body", "")
 		return
 	}
 	if body.PublishToken == "" || body.PublishToken != s.PublishToken {
 		expected := s.PublishToken
 		if expected == "" {
-			expected = "(ya consumido: es de un solo uso, vuelve a GET /manage para obtener otro)"
+			expected = "(already consumed: it is single-use, go back to GET /manage to get a new one)"
 		}
 		writeCorrErr(w, r, http.StatusForbidden, "publish_token",
-			"el publishToken enviado no coincide con el emitido en GET /manage",
-			"extrae el input oculto publish_token del HTML de GET /manage (regex) y envíalo en el campo publishToken del body JSON; cada creación requiere volver a GET /manage",
+			"the publishToken sent does not match the one issued in GET /manage",
+			"extract the hidden input publish_token from the HTML of GET /manage (regex) and send it in the publishToken field of the JSON body; each create requires a fresh GET /manage",
 			body.PublishToken, expected)
 		return
 	}
 	if body.Name == "" || body.Venue == "" || body.Date == "" {
 		writeErr(w, r, http.StatusBadRequest, "name/venue/date",
-			"name, venue y date son obligatorios", "")
+			"name, venue and date are required", "")
 		return
 	}
 	if s.ownedCount() >= maxEventsPerUser {
 		writeErr(w, r, http.StatusConflict, "events_limit",
-			fmt.Sprintf("límite alcanzado: un usuario no puede tener más de %d eventos; borra alguno para crear otro", maxEventsPerUser),
-			"usa DELETE /api/manage/events/{id} (con If-Match) para liberar lugar")
+			fmt.Sprintf("limit reached: a user cannot have more than %d events; delete one to create another", maxEventsPerUser),
+			"use DELETE /api/manage/events/{id} (with If-Match) to free a slot")
 		return
 	}
 	ev := buildEvent(body.Name, body.Venue, body.Date)
@@ -118,9 +118,9 @@ func (app *App) ownedEvent(w http.ResponseWriter, r *http.Request, s *Session) *
 	ev := s.findEvent(r.PathValue("id"))
 	if ev == nil || !ev.Owned {
 		writeCorrErr(w, r, http.StatusNotFound, "event_id",
-			"el event_id enviado no corresponde a un evento creado por este usuario",
-			"usa el id devuelto en $.event.id de POST /api/manage/events o en $.events[*].id de GET /api/manage/events",
-			r.PathValue("id"), "(el $.event.id devuelto por POST /api/manage/events)")
+			"the event_id sent does not match an event created by this user",
+			"use the id returned in $.event.id of POST /api/manage/events or in $.events[*].id of GET /api/manage/events",
+			r.PathValue("id"), "(the $.event.id returned by POST /api/manage/events)")
 		return nil
 	}
 	return ev
@@ -153,15 +153,15 @@ func (app *App) checkIfMatch(w http.ResponseWriter, r *http.Request, ev *Event) 
 	ifMatch := stripQuotes(r.Header.Get("If-Match"))
 	if ifMatch == "" {
 		writeCorrErr(w, r, http.StatusPreconditionRequired, "if_match",
-			"falta el header If-Match con la rev vigente del evento",
-			"extrae la rev del header ETag de GET /manage/events/{id}/edit (regex sobre headers) o de $.event.rev y envíala como header If-Match",
+			"missing the If-Match header with the event's current rev",
+			"extract the rev from the ETag header of GET /manage/events/{id}/edit (regex over headers) or from $.event.rev and send it as the If-Match header",
 			ifMatch, ev.Rev)
 		return false
 	}
 	if ifMatch != ev.Rev {
 		writeCorrErr(w, r, http.StatusPreconditionFailed, "if_match",
-			"la rev enviada en If-Match ya no es la vigente (el evento cambió); vuelve a leerlo y correlaciona la última",
-			"cada actualización devuelve una rev nueva en $.event.rev; correlaciona siempre la última, no reutilices valores viejos",
+			"the rev sent in If-Match is no longer current (the event changed); read it again and correlate the latest one",
+			"each update returns a new rev in $.event.rev; always correlate the latest one, do not reuse old values",
 			ifMatch, ev.Rev)
 		return false
 	}
@@ -187,7 +187,7 @@ func (app *App) apiManageUpdate(w http.ResponseWriter, r *http.Request) {
 		Date  string `json:"date"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeErr(w, r, http.StatusBadRequest, "body", "body JSON inválido", "")
+		writeErr(w, r, http.StatusBadRequest, "body", "invalid JSON body", "")
 		return
 	}
 	app.store.Lock()

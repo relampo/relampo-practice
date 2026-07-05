@@ -193,7 +193,7 @@ func TestFullPurchaseFlow(t *testing.T) {
 	form := url.Values{"reservation_id": {resv.ReservationID}, "relampo_token": {resv.RelampoToken}}
 	resp, body = post("/pay/start", "application/x-www-form-urlencoded", form.Encode(),
 		map[string]string{hintsHeader: "true"})
-	if resp.StatusCode != 403 || !strings.Contains(body, "CRUDO") {
+	if resp.StatusCode != 403 || !strings.Contains(body, "RAW") {
 		t.Fatalf("el token crudo debía rechazarse con 403: %d %s", resp.StatusCode, body)
 	}
 
@@ -212,7 +212,7 @@ func TestFullPurchaseFlow(t *testing.T) {
 
 	// [8c] reutilizar el token debe fallar (un solo uso)
 	resp, body = post("/pay/start", "application/x-www-form-urlencoded", form.Encode(), nil)
-	if resp.StatusCode != 403 || !strings.Contains(body, "usado") {
+	if resp.StatusCode != 403 || !strings.Contains(body, "already used") {
 		t.Fatalf("la reutilización debía dar 403: %d %s", resp.StatusCode, body)
 	}
 
