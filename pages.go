@@ -129,13 +129,13 @@ const headerHTML = `
 </header>`
 
 const footerHTML = `
-<footer data-i18n="footer">RelampoTickets &mdash; app de pr&aacute;ctica para correlaci&oacute;n en pruebas de performance</footer>`
+<footer data-i18n="footer">RelampoTickets &mdash; app de pr&aacute;ctica para correlaci&oacute;n en pruebas de rendimiento</footer>`
 
 var homeTmpl = mustPage("home", `
 <body data-page="home">`+headerHTML+`
 <main>
   <h1><span data-i18n="homeTitle">Entradas para tus eventos,</span> <span class="hl" data-i18n="homeTitleHl">a la velocidad del rayo</span></h1>
-  <p class="sub" data-i18n="homeSub">Inici&aacute; sesi&oacute;n para comprar entradas.</p>
+<p class="sub" data-i18n="homeSub">Inicia sesi&oacute;n para comprar entradas.</p>
   <div class="panel">
     <h2 data-i18n="loginTitle">Iniciar sesi&oacute;n</h2>
     <form id="loginForm">
@@ -154,17 +154,17 @@ var homeTmpl = mustPage("home", `
     <div class="feature">
       <span class="ico"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
       <h3 data-i18n="feat1t">Correlaci&oacute;n autom&aacute;tica completa</h3>
-      <p data-i18n="feat1d">Relampo detecta y correlaciona los valores din&aacute;micos por vos al grabar: menos scripting manual, pruebas listas antes.</p>
+<p data-i18n="feat1d">Relampo detecta y correlaciona los valores din&aacute;micos por ti al grabar: menos scripting manual, pruebas listas antes.</p>
     </div>
     <div class="feature">
       <span class="ico"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><path d="M12 12V8"/></svg></span>
       <h3 data-i18n="feat2t">500 usuarios virtuales, 4 nodos</h3>
-      <p data-i18n="feat2d">Gener&aacute; hasta 500 usuarios virtuales distribuidos en 4 nodos de carga con la integraci&oacute;n nativa de Relampo con GitHub.</p>
+<p data-i18n="feat2d">Genera hasta 500 usuarios virtuales distribuidos en 4 nodos de carga con la integraci&oacute;n nativa de Relampo con GitHub.</p>
     </div>
     <div class="feature">
       <span class="ico"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="m10 12-2 2 2 2"/><path d="m14 16 2-2-2-2"/></svg></span>
       <h3 data-i18n="feat3t">Scripts YAML declarativos</h3>
-      <p data-i18n="feat3d">F&aacute;ciles de leer, intuitivos y versionables en Git: revis&aacute;s tus pruebas de performance como revis&aacute;s c&oacute;digo.</p>
+<p data-i18n="feat3d">F&aacute;ciles de leer, intuitivos y versionables en Git: revisas tus pruebas de rendimiento como revisas c&oacute;digo.</p>
     </div>
     <div class="feature">
       <span class="ico"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg></span>
@@ -172,7 +172,7 @@ var homeTmpl = mustPage("home", `
       <p data-i18n="feat4d">Generaci&oacute;n de carga de alto rendimiento con la eficiencia y la concurrencia nativa de Go.</p>
     </div>
   </div>
-  <a class="features-link" href="https://relampo.com" target="_blank" rel="noopener" data-i18n="featLink">Conoc&eacute; m&aacute;s en relampo.com &rarr;</a>
+<a class="features-link" href="https://relampo.com" target="_blank" rel="noopener" data-i18n="featLink">Conoce m&aacute;s en relampo.com &rarr;</a>
 </main>`+footerHTML+`
 <script src="/static/app.js"></script>
 </body>`)
@@ -180,7 +180,7 @@ var homeTmpl = mustPage("home", `
 var eventsTmpl = mustPage("events", `
 <body data-page="events">`+headerHTML+`
 <main>
-  <h1><span data-i18n="eventsTitle">Eleg&iacute; tu</span> <span class="hl" data-i18n="eventsTitleHl">evento</span></h1>
+<h1><span data-i18n="eventsTitle">Elige tu</span> <span class="hl" data-i18n="eventsTitleHl">evento</span></h1>
   <p class="sub"><span data-i18n="eventsHello">Hola</span> <strong>{{.User}}</strong>. <span data-i18n="eventsSub">La app elige un evento y un asiento al azar, reserva, y te deja listo el pago.</span></p>
   <div id="app" data-config="{{.ConfigJSON}}"></div>
   <div class="panel">
@@ -210,11 +210,11 @@ var manageTmpl = mustPage("manage", `
 <body data-page="manage">`+headerHTML+`
 <main>
   <h1><span data-i18n="manageTitle">Mis</span> <span class="hl" data-i18n="manageTitleHl">eventos</span></h1>
-  <p class="sub" data-i18n="manageSub">Cre&aacute; tus propios eventos: aparecen en el cat&aacute;logo y se pueden comprar.</p>
+<p class="sub" data-i18n="manageSub">Crea tus propios eventos: aparecen en el cat&aacute;logo y se pueden comprar.</p>
   <div class="cols">
   <div class="panel">
     <h2 data-i18n="createTitle">Crear evento</h2>
-    {{if .AtLimit}}<p class="note" data-i18n="limitNote">Alcanzaste el l&iacute;mite de 5 eventos. Borr&aacute; alguno para poder crear otro.</p>{{end}}
+{{if .AtLimit}}<p class="note" data-i18n="limitNote">Has alcanzado el l&iacute;mite de 5 eventos. Borra alguno para poder crear otro.</p>{{end}}
     <form id="createForm"{{if .AtLimit}} style="display:none"{{end}}>
       <input type="hidden" name="publish_token" value="{{.PublishToken}}">
       <label for="evname" data-i18n="nameLabel">Nombre</label>
@@ -281,7 +281,7 @@ var callbackTmpl = mustPage("callback", `
 <body data-page="callback">`+headerHTML+`
 <main>
   <div class="badge" data-i18n="cbBadge">RelampoPay &mdash; confirmaci&oacute;n</div>
-  <h1><span data-i18n="cbTitle">Revis&aacute; tu</span> <span class="hl" data-i18n="cbTitleHl">compra</span></h1>
+<h1><span data-i18n="cbTitle">Revisa tu</span> <span class="hl" data-i18n="cbTitleHl">compra</span></h1>
   <div class="panel">
     <h2 data-i18n="summary">Resumen</h2>
     <dl class="kv">
