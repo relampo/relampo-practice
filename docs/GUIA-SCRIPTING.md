@@ -236,6 +236,11 @@ callback (el usuario revisa el resumen antes de confirmar)
 - `/pay/continue` → 302, el `Location` contiene `code=`
 - `/pay/callback` → 200, el HTML contiene `name="view_state"`
 
+> ⚠️ **`request` y `view_state` vienen HTML-escapados.** Son base64, y en el HTML el
+> carácter `+` aparece como `&#43;`. Hay que des-escaparlos antes de enviarlos o el
+> servidor responde 403. En JMeter: `${__unescapeHtml(${variable})}`. Es intermitente:
+> solo falla cuando el valor contiene un `+`.
+
 ---
 
 ### Paso 12 — Confirmar la compra
@@ -274,6 +279,9 @@ GET /logout                              → 302
 **Think time:** 2–3 s
 
 **Assertions:** status `302` con `Location: /`
+
+> ⚠️ **No seguir el redirect del logout.** Apunta a `/`, y ese `GET /` abre una sesión
+> nueva que queda huérfana y consume un cupo del límite de 5 por IP.
 
 ---
 
