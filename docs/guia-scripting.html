@@ -1,0 +1,834 @@
+<title>Guía de Scripting RelampoTickets</title>
+<style>
+  /* ---------- tokens: light (bare :root = complete palette) ---------- */
+  :root {
+    --ground: #f4f6fb;
+    --surface: #ffffff;
+    --surface-2: #eef1f8;
+    --ink: #0f1626;
+    --ink-soft: #4d5a75;
+    --ink-faint: #75819c;
+    --rule: #dbe2ef;
+    --rule-soft: #e8edf6;
+    --accent: #9a6400;
+    --accent-ink: #ffffff;
+    --bolt: #e0a800;
+    --ok: #14713d;
+    --ok-bg: #e3f5ea;
+    --warn: #8a5a00;
+    --warn-bg: #fdf1d9;
+    --crit: #a52020;
+    --crit-bg: #fbe6e6;
+    --info: #1a4f96;
+    --info-bg: #e4eefc;
+    --code-bg: #f1f4fa;
+    --shadow: 0 1px 2px rgba(15, 22, 38, .06), 0 8px 24px rgba(15, 22, 38, .05);
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0a0e18;
+      --surface: #111827;
+      --surface-2: #161f33;
+      --ink: #e9edf7;
+      --ink-soft: #9aa7c2;
+      --ink-faint: #71809e;
+      --rule: #232e49;
+      --rule-soft: #1b2438;
+      --accent: #ffd60a;
+      --accent-ink: #14180a;
+      --bolt: #ffd60a;
+      --ok: #63d68f;
+      --ok-bg: #10291c;
+      --warn: #f0bc57;
+      --warn-bg: #2b2010;
+      --crit: #ff8f8f;
+      --crit-bg: #2e1517;
+      --info: #86b6f5;
+      --info-bg: #131f34;
+      --code-bg: #0d1422;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 30px rgba(0, 0, 0, .25);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0a0e18;
+    --surface: #111827;
+    --surface-2: #161f33;
+    --ink: #e9edf7;
+    --ink-soft: #9aa7c2;
+    --ink-faint: #71809e;
+    --rule: #232e49;
+    --rule-soft: #1b2438;
+    --accent: #ffd60a;
+    --accent-ink: #14180a;
+    --bolt: #ffd60a;
+    --ok: #63d68f;
+    --ok-bg: #10291c;
+    --warn: #f0bc57;
+    --warn-bg: #2b2010;
+    --crit: #ff8f8f;
+    --crit-bg: #2e1517;
+    --info: #86b6f5;
+    --info-bg: #131f34;
+    --code-bg: #0d1422;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 30px rgba(0, 0, 0, .25);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 1.5rem; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
+
+  /* ---------- shell ---------- */
+  .shell {
+    display: grid;
+    grid-template-columns: 250px minmax(0, 1fr);
+    gap: 0;
+    max-width: 1240px;
+    margin: 0 auto;
+  }
+  @media (max-width: 900px) { .shell { grid-template-columns: 1fr; } }
+
+  /* ---------- sidebar ---------- */
+  .side {
+    border-right: 1px solid var(--rule);
+    padding: 32px 20px 60px;
+    position: sticky;
+    top: 0;
+    align-self: start;
+    max-height: 100vh;
+    overflow-y: auto;
+  }
+  @media (max-width: 900px) {
+    .side { position: static; max-height: none; border-right: 0; border-bottom: 1px solid var(--rule); padding-bottom: 24px; }
+  }
+  .brand { display: flex; align-items: center; gap: 8px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 4px; }
+  .brand svg { width: 18px; height: 18px; fill: var(--bolt); flex: none; }
+  .side .meta { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); margin-bottom: 26px; word-break: break-all; }
+  nav ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px; counter-reset: nav; }
+  nav a {
+    display: flex; gap: 10px; align-items: baseline;
+    padding: 6px 8px; border-radius: 6px;
+    text-decoration: none; color: var(--ink-soft); font-size: 13.5px; line-height: 1.35;
+  }
+  nav a:hover { background: var(--surface-2); color: var(--ink); }
+  nav a .n { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); flex: none; width: 14px; }
+
+  /* ---------- main ---------- */
+  main { padding: 32px 32px 96px; min-width: 0; }
+  @media (max-width: 900px) { main { padding: 24px 18px 72px; } }
+
+  .lede { max-width: 68ch; }
+  h1 {
+    font-size: clamp(28px, 4.2vw, 40px);
+    line-height: 1.1; letter-spacing: -.03em; margin: 0 0 12px;
+    text-wrap: balance;
+  }
+  .sub { font-size: 17px; color: var(--ink-soft); margin: 0 0 8px; }
+  .tools { display: flex; flex-wrap: wrap; gap: 6px; margin: 18px 0 0; }
+  .tool {
+    font-family: var(--mono); font-size: 11.5px; letter-spacing: .04em;
+    border: 1px solid var(--rule); border-radius: 999px; padding: 3px 10px; color: var(--ink-soft);
+    background: var(--surface);
+  }
+
+  section { margin-top: 56px; scroll-margin-top: 20px; }
+  h2 {
+    font-size: 13px; text-transform: uppercase; letter-spacing: .12em;
+    font-family: var(--mono); font-weight: 700; color: var(--accent);
+    margin: 0 0 6px; display: flex; align-items: center; gap: 10px;
+  }
+  h2::before {
+    content: attr(data-n);
+    font-size: 11px; color: var(--ink-faint);
+    border: 1px solid var(--rule); border-radius: 4px; padding: 1px 6px;
+  }
+  h2 + .h { font-size: clamp(21px, 2.6vw, 27px); letter-spacing: -.02em; line-height: 1.2; margin: 0 0 18px; text-wrap: balance; }
+  h3 { font-size: 17px; letter-spacing: -.01em; margin: 34px 0 10px; }
+  p, li { max-width: 68ch; }
+  p { margin: 0 0 14px; }
+  ul, ol { padding-left: 20px; margin: 0 0 14px; }
+  li { margin-bottom: 6px; }
+  strong { font-weight: 700; }
+
+  code {
+    font-family: var(--mono); font-size: .86em;
+    background: var(--code-bg); border: 1px solid var(--rule-soft);
+    border-radius: 4px; padding: .1em .38em; word-break: break-word;
+  }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--rule);
+    border-radius: 10px; padding: 14px 16px; overflow-x: auto; margin: 0 0 16px;
+  }
+  pre code { background: none; border: 0; padding: 0; font-size: 12.8px; line-height: 1.6; }
+
+  /* ---------- tables ---------- */
+  .tw { overflow-x: auto; margin: 0 0 18px; border: 1px solid var(--rule); border-radius: 10px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+  th {
+    font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--ink-faint); font-weight: 600; background: var(--surface-2); white-space: nowrap;
+  }
+  tr:last-child td { border-bottom: 0; }
+  td code { font-size: 12px; }
+
+  /* ---------- flow steps ---------- */
+  .steps { display: flex; flex-direction: column; gap: 14px; }
+  .step {
+    background: var(--surface); border: 1px solid var(--rule);
+    border-radius: 12px; padding: 18px 20px; box-shadow: var(--shadow);
+  }
+  .step > header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 6px; flex-wrap: wrap; }
+  .step .num {
+    font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: .08em;
+    color: var(--accent-ink); background: var(--accent);
+    border-radius: 5px; padding: 2px 7px; flex: none;
+  }
+  .step h4 { font-size: 18px; margin: 0; letter-spacing: -.01em; }
+  .step .act { color: var(--ink-soft); font-size: 14.5px; margin: 0 0 14px; }
+
+  .reqs { display: flex; flex-direction: column; gap: 4px; margin: 0 0 14px; }
+  .req {
+    display: flex; align-items: center; gap: 9px;
+    font-family: var(--mono); font-size: 12.5px;
+    background: var(--code-bg); border: 1px solid var(--rule-soft);
+    border-radius: 7px; padding: 6px 10px; overflow-x: auto; white-space: nowrap;
+  }
+  .verb { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; border-radius: 4px; padding: 2px 6px; flex: none; }
+  .get { color: var(--info); background: var(--info-bg); }
+  .post { color: var(--ok); background: var(--ok-bg); }
+  .put { color: var(--warn); background: var(--warn-bg); }
+  .del { color: var(--crit); background: var(--crit-bg); }
+  .req .st { margin-left: auto; color: var(--ink-faint); font-size: 11.5px; padding-left: 12px; }
+
+  .facts { display: grid; grid-template-columns: 118px minmax(0, 1fr); gap: 8px 14px; font-size: 14px; }
+  @media (max-width: 560px) { .facts { grid-template-columns: 1fr; gap: 3px; } }
+  .facts dt {
+    font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--ink-faint); padding-top: 3px;
+  }
+  .facts dd { margin: 0; color: var(--ink-soft); }
+  .facts dd ul { margin: 0; padding-left: 16px; }
+  .facts dd li { margin-bottom: 2px; }
+  .facts b { color: var(--ink); font-weight: 600; }
+
+  .note {
+    border-left: 3px solid var(--accent); background: var(--surface-2);
+    border-radius: 0 8px 8px 0; padding: 12px 16px; margin: 14px 0 0; font-size: 14px;
+  }
+  .note.crit { border-left-color: var(--crit); }
+  .note p:last-child { margin-bottom: 0; }
+  .note .tag {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase;
+    color: var(--accent); display: block; margin-bottom: 3px;
+  }
+  .note.crit .tag { color: var(--crit); }
+
+  .chk { list-style: none; padding: 0; }
+  .chk li { padding-left: 26px; position: relative; }
+  .chk li::before {
+    content: ""; position: absolute; left: 0; top: 6px;
+    width: 13px; height: 13px; border: 1.5px solid var(--ink-faint); border-radius: 3px;
+  }
+
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+  .card { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; }
+  .card h4 { margin: 0 0 8px; font-size: 15px; }
+  .card p { font-size: 14px; color: var(--ink-soft); margin: 0; }
+
+  footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--rule); color: var(--ink-faint); font-size: 13px; }
+</style>
+
+<div class="shell">
+  <aside class="side">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      RelampoTickets
+    </div>
+    <div class="meta">practice.relampo.com</div>
+    <nav aria-label="Secciones">
+      <ol>
+        <li><a href="#antes"><span class="n">01</span> Antes de grabar</a></li>
+        <li><a href="#flujo"><span class="n">02</span> El flujo base</a></li>
+        <li><a href="#valores"><span class="n">03</span> Valores dinámicos</a></li>
+        <li><a href="#extractores"><span class="n">04</span> Extractores por herramienta</a></li>
+        <li><a href="#token"><span class="n">05</span> El valor encriptado</a></li>
+        <li><a href="#assertions"><span class="n">06</span> Assertions</a></li>
+        <li><a href="#think"><span class="n">07</span> Think times y carga</a></li>
+        <li><a href="#checklist"><span class="n">08</span> Checklist final</a></li>
+        <li><a href="#niveles"><span class="n">09</span> Ejercicios por nivel</a></li>
+      </ol>
+    </nav>
+  </aside>
+
+  <main>
+    <div class="lede">
+      <h1>Guía de scripting</h1>
+      <p class="sub">Cómo construir un script de performance sobre RelampoTickets: flujo paso a paso, think times, assertions y correlación de los 18 valores dinámicos.</p>
+      <p class="sub">Los flujos y las grabaciones pueden cambiar; los principios de esta guía no.</p>
+      <div class="tools">
+        <span class="tool">RELAMPO</span>
+        <span class="tool">JMETER</span>
+        <span class="tool">K6</span>
+        <span class="tool">GATLING</span>
+      </div>
+    </div>
+
+    <!-- ============ 01 ============ -->
+    <section id="antes">
+      <h2 data-n="01">Preparación</h2>
+      <p class="h">Antes de grabar</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Punto</th><th>Por qué importa</th></tr></thead>
+          <tbody>
+            <tr><td><b>Grabá en ventana de incógnito</b></td><td>Con caché limpia el navegador pide <code>/static/app.js</code>, donde nace el <code>Etag</code> y donde se lee la función de encriptación. Con caché sucia ese request no aparece.</td></tr>
+            <tr><td><b>Máximo 5 sesiones por nodo</b></td><td>La app limita 5 sesiones concurrentes por IP. La sexta recibe <code>429 vus_per_node</code>. Un script abandonado sin <code>/logout</code> libera su cupo a los 90 s.</td></tr>
+            <tr><td><b>Usuarios de prueba</b></td><td><code>user001</code> … <code>user500</code> con <code>Pass001!</code> … <code>Pass500!</code>. Tu CSV: <code>for i in $(seq -w 1 500); do echo "user$i,Pass$i!"; done</code></td></tr>
+            <tr><td><b>Un usuario por VU</b></td><td>Cada sesión tiene su propio catálogo y asientos: no hay colisiones entre usuarios virtuales.</td></tr>
+            <tr><td><b>Grabá de corrido</b></td><td>El token de pago expira a los 60 s. Si te demorás entre reservar y pagar, grabás un 403.</td></tr>
+            <tr><td><b>Activá las pistas al depurar</b></td><td>Con el header <code>X-Practice-Hints: true</code> los errores te dicen de dónde extraer el valor que falló. Sacalo en la versión final.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ 02 ============ -->
+    <section id="flujo">
+      <h2 data-n="02">Recorrido</h2>
+      <p class="h">El flujo base</p>
+      <p>Estas 13 acciones capturan prácticamente todos los valores dinámicos de la app. Cada paso indica qué hace el usuario, qué requests genera, cuánto esperar y qué validar.</p>
+      <div class="note">
+        <span class="tag">Think time</span>
+        <p>Es el tiempo que una persona real tarda en leer, decidir o tipear. Va <b>después</b> de recibir la respuesta y <b>antes</b> de la siguiente acción. Sin think times, el script no simula usuarios: simula una inundación.</p>
+      </div>
+
+      <div class="steps" style="margin-top:22px">
+
+        <article class="step">
+          <header><span class="num">PASO 1</span><h4>Abrir la home</h4></header>
+          <p class="act">El usuario entra a practice.relampo.com</p>
+          <div class="reqs">
+            <div class="req"><span class="verb get">GET</span>/<span class="st">200 · HTML</span></div>
+            <div class="req"><span class="verb get">GET</span>/static/app.js<span class="st">200 · solo con caché limpia</span></div>
+            <div class="req"><span class="verb get">GET</span>/favicon.svg<span class="st">200</span></div>
+          </div>
+          <dl class="facts">
+            <dt>Think time</dt><dd>5–8 s — lee la página, ve el formulario</dd>
+            <dt>Assertions</dt><dd><ul><li>Status <b>200</b></li><li>El body contiene <b>RelampoTickets</b></li><li>El body contiene <code>name="csrf_token"</code></li></ul></dd>
+            <dt>Nacen aquí</dt><dd><b>relampo_session</b> (cookie, header <code>Set-Cookie</code>) · <b>csrf_token</b> (input oculto) · <b>Etag</b></dd>
+          </dl>
+          <div class="note">
+            <span class="tag">El request más importante</span>
+            <p>Acá nace la única cookie de la app —que necesitan todos los requests siguientes— y el <code>csrf_token</code>, que recién se usa en el paso 12. Dejá activado el manejo automático de cookies de tu herramienta.</p>
+          </div>
+        </article>
+
+        <article class="step">
+          <header><span class="num">PASO 2</span><h4>Iniciar sesión</h4></header>
+          <p class="act">Escribe usuario y contraseña, hace clic en “Entrar”</p>
+          <div class="reqs">
+            <div class="req"><span class="verb post">POST</span>/api/auth<span class="st">200 · JSON</span></div>
+          </div>
+          <dl class="facts">
+            <dt>Body</dt><dd><code>{"username":"user001","password":"Pass001!"}</code></dd>
+            <dt>Think time</dt><dd>10–15 s — tipear usuario y contraseña</dd>
+            <dt>Assertions</dt><dd><ul><li>Status <b>200</b></li><li>Existe el campo <code>bearer</code></li><li><code>$.user.username</code> coincide con el usuario enviado</li></ul></dd>
+            <dt>Nacen aquí</dt><dd><b>bearer</b> — jsonpath <code>$.bearer</code></dd>
+          </dl>
+        </article>
+
+        <article class="step">
+          <header><span class="num">PASO 3</span><h4>Ver “Mis eventos”</h4></header>
+          <p class="act">Tras el login la app lo lleva a su panel de eventos</p>
+          <div class="reqs">
+            <div class="req"><span class="verb get">GET</span>/manage<span class="st">200 · HTML</span></div>
+            <div class="req"><span class="verb get">GET</span>/api/manage/events<span class="st">200 · JSON</span></div>
+          </div>
+          <dl class="facts">
+            <dt>Think time</dt><dd>4–6 s</dd>
+            <dt>Assertions</dt><dd><ul><li>Status <b>200</b> en ambos</li><li>El HTML contiene <code>name="publish_token"</code></li><li><code>$.count</code> ≥ 1 — todo usuario arranca con el evento <i>Relampo Fest</i></li></ul></dd>
+            <dt>Nacen aquí</dt><dd><b>publish_token</b> — input oculto, <b>un solo uso</b></dd>
+            <dt>Usa</dt><dd><b>bearer</b> en el header <code>Authorization</code></dd>
+          </dl>
+        </article>
+
+        <article class="step">
+          <header><span class="num">PASO 4</span><h4>Crear un evento</h4></header>
+          <p class="act">Llena nombre, lugar y fecha, hace clic en “Publicar evento”</p>
+          <div class="reqs">
+            <div class="req"><span class="verb post">POST</span>/api/manage/events<span class="st">201 · JSON</span></div>
+          </div>
+          <dl class="facts">
+            <dt>Body</dt><dd><code>{"name":"…","venue":"…","date":"…","publishToken":"{{publish_token}}"}</code></dd>
+            <dt>Think time</dt><dd>15–25 s — llenar tres campos</dd>
+            <dt>Assertions</dt><dd><ul><li>Status <b>201</b></li><li>Existe <code>$.event.id</code></li><li><code>$.event.name</code> coincide con lo enviado</li></ul></dd>
+            <dt>Nacen aquí</dt><dd><b>event_id</b> <code>$.event.id</code> · <b>event_rev</b> <code>$.event.rev</code></dd>
+            <dt>Usa</dt><dd><b>publish_token</b>, <b>bearer</b></dd>
+          </dl>
+          <div class="note">
+            <span class="tag">Parametrizá</span>
+            <p>Usá un nombre variable (<code>Evento-${VU}-${iteración}</code>) en vez de texto fijo. Y recordá el límite: <b>5 eventos por usuario</b>; el sexto devuelve <code>409 events_limit</code>.</p>
+          </div>
+        </article>
+
+        <article class="step">
+          <header><span class="num">PASO 5</span><h4>Abrir el evento para editar</h4></header>
+          <p class="act">Hace clic en “editar” sobre su evento</p>
+          <div class="reqs">
+            <div class="req"><span class="verb get">GET</span>/manage/events/{{event_id}}/edit<span class="st">200 · HTML</span></div>
+          </div>
+          <dl class="facts">
+            <dt>Think time</dt><dd>3–5 s</dd>
+            <dt>Assertions</dt><dd><ul><li>Status <b>200</b></li><li>Existe el header <code>ETag</code></li><li>El HTML contiene el nombre del evento</li></ul></dd>
+            <dt>Nacen aquí</dt><dd><b>event_rev</b> — header <code>ETag</code>, viene entre comillas: hay que quitarlas</dd>
+          </dl>
+        </article>
+
+        <article class="step">
+          <header><span class="num">PASO 6</span><h4>Guardar cambios</h4></header>
+          <p class="act">Cambia el nombre o el lugar, hace clic en “Guardar cambios”</p>
+          <div class="reqs">
+            <div class="req"><span class="verb put">PUT</span>/api/manage/events/{{event_id}}<span class="st">200 · JSON</span></div>
+          </div>
+          <dl class="facts">
+            <dt>Headers</dt><dd><code>Authorization: Bearer …</code> · <code>If-Match: {{event_rev}}</code></dd>
+            <dt>Think time</dt><dd>10–15 s</dd>
+            <dt>Assertions</dt><dd><ul><li>Status <b>200</b></li><li><code>$.event.rev</code> es <b>distinta</b> de la enviada</li></ul></dd>
+            <dt>Nacen aquí</dt><dd><b>event_rev_nueva</b> — necesaria para el DELETE del paso 13</dd>
+          </dl>
+          <div class="note crit">
+            <span class="tag">Bloqueo optimista</span>
+            <p>Sin el header <code>If-Match</code> → <b>428</b>. Con una versión vieja → <b>412</b>. Cada modificación devuelve una <code>rev</code> nueva: correlacioná siempre la última.</p>
+          </div>
+        </article>
+
+        <article class="step">
+          <header><span class="num">PASO 7</span><h4>Ir a comprar</h4></header>
+          <p class="act">Hace clic en “comprar” en el menú</p>
+          <div class="reqs">
+            <div class="req"><span class="verb get">GET</span>/events<span class="st">200 · HTML</span></div>
+          </div>
+          <dl class="facts">
+            <dt>Think time</dt><dd>3–5 s</dd>
+            <dt>Assertions</dt><dd>Status <b>200</b> · el HTML contiene <code>data-config</code></dd>
+            <dt>Nacen aquí</dt><dd><b>catalog_id</b> — dentro de un <b>JSON escapado</b> en el atributo <code>data-config</code>, con comillas como <code>&amp;#34;</code></dd>
+          </dl>
+        </article>
+
+        <article class="step">
+          <header><span class="num">PASO 8</span><h4>Ver catálogo y asientos</h4></header>
+          <p class="act">La página carga los eventos y elige un asiento</p>
+          <div class="reqs">
+            <div class="req"><span class="verb get">GET</span>/api/events?catalogId={{catalog_id}}<span class="st">200 · JSON</span></div>
+            <div class="req"><span class="verb get">GET</span>/api/events/{{event_id}}/seats<span class="st">200 · JSON</span></div>
+          </div>
+          <dl class="facts">
+            <dt>Think time</dt><dd>5–8 s — elegir asiento</dd>
+            <dt>Assertions</dt><dd><ul><li>Status <b>200</b> en ambos</li><li><code>$.events</code> tiene al menos 1 elemento</li><li><code>$.seats</code> tiene 12 elementos</li><li>Existe el header <code>X-Correlation-Id</code></li></ul></dd>
+            <dt>Nacen aquí</dt><dd><b>event_id</b> <code>$.events[*].id</code> · <b>seat_id</b> <code>$.seats[*].id</code> · <b>X-Correlation-Id</b> (header de respuesta, un solo uso)</dd>
+          </dl>
+          <div class="note">
+            <span class="tag">Ocurrencia aleatoria</span>
+            <p>No uses índices fijos como <code>$.seats[3].id</code>. Acá funciona porque cada sesión tiene su propio stock, pero contra un sitio real es la causa número uno de scripts que fallan en la segunda iteración.</p>
+          </div>
+        </article>
+
+        <article class="step">
+          <header><span class="num">PASO 9</span><h4>Reservar el asiento</h4></header>
+          <p class="act">La app reserva automáticamente al cargar la página</p>
+          <div class="reqs">
+            <div class="req"><span class="verb post">POST</span>/api/reservations<span class="st">201 · JSON</span></div>
+          </div>
+          <dl class="facts">
+            <dt>Headers</dt><dd><code>Authorization: Bearer …</code> · <code>X-Correlation-Id: {{X-Correlation-Id}}</code></dd>
+            <dt>Body</dt><dd><code>{"eventId":"{{event_id}}","seatId":"{{seat_id}}"}</code></dd>
+            <dt>Think time</dt><dd>3–5 s — <b>máximo 60 s</b>, el token expira</dd>
+            <dt>Assertions</dt><dd><ul><li>Status <b>201</b></li><li>Existe <code>$.relampoToken</code></li><li><code>$.tokenExpiresInSeconds</code> es 60</li></ul></dd>
+            <dt>Nacen aquí</dt><dd><b>reservation_id</b> · <b>relampo_token_a</b> <code>$.relampoToken</code></dd>
+          </dl>
+        </article>
+
+        <article class="step">
+          <header><span class="num">PASO 10</span><h4>Pagar</h4></header>
+          <p class="act">Hace clic en “Pagar ahora”</p>
+          <div class="reqs">
+            <div class="req"><span class="verb post">POST</span>/pay/start<span class="st">302 · redirect</span></div>
+          </div>
+          <dl class="facts">
+            <dt>Body</dt><dd><code>reservation_id={{reservation_id}}&amp;relampo_token={{relampo_token_b}}</code></dd>
+            <dt>Think time</dt><dd>2–3 s</dd>
+            <dt>Assertions</dt><dd>Status <b>302</b> · el header <code>Location</code> contiene <code>state=</code></dd>
+            <dt>Nacen aquí</dt><dd><b>state</b> — del header <code>Location</code>, viene <b>URL-encoded</b></dd>
+          </dl>
+          <div class="note crit">
+            <span class="tag">Este paso no se resuelve con extractores</span>
+            <p>El token que recibiste en el paso 9 <b>no es</b> el que hay que enviar: el navegador lo transforma con JavaScript. El método y el código para cada herramienta están en la <a href="#token">sección 05</a>.</p>
+            <p>Además: <b>desactivá el seguimiento automático de redirects</b> en este request, o tu herramienta se come el 302 y no vas a poder leer el <code>state</code>.</p>
+          </div>
+        </article>
+
+        <article class="step">
+          <header><span class="num">PASO 11</span><h4>Pasarela de pago</h4></header>
+          <p class="act">La pasarela redirige sola: formulario auto-submit</p>
+          <div class="reqs">
+            <div class="req"><span class="verb get">GET</span>/pay/authorize?state={{state}}<span class="st">200 · HTML</span></div>
+            <div class="req"><span class="verb post">POST</span>/pay/continue<span class="st">302</span></div>
+            <div class="req"><span class="verb get">GET</span>/pay/callback?code={{code}}&amp;state={{state}}<span class="st">200 · HTML</span></div>
+          </div>
+          <dl class="facts">
+            <dt>Body</dt><dd><code>request={{request}}&amp;x_correlation_id={{x_correlation_id}}</code></dd>
+            <dt>Think time</dt><dd>0 s entre los tres — los dispara la máquina. 5–8 s después del callback: el usuario revisa el resumen</dd>
+            <dt>Assertions</dt><dd><ul><li>authorize → 200, contiene <code>name="request"</code></li><li>continue → 302, el <code>Location</code> contiene <code>code=</code></li><li>callback → 200, contiene <code>name="view_state"</code></li></ul></dd>
+            <dt>Nacen aquí</dt><dd><b>request</b> · <b>x_correlation_id</b> · <b>code</b> · <b>view_state</b> (base64 de ~1.4 KB) · <b>reservation_id</b> re-emitido</dd>
+          </dl>
+        </article>
+
+        <article class="step">
+          <header><span class="num">PASO 12</span><h4>Confirmar la compra</h4></header>
+          <p class="act">Hace clic en “Confirmar compra”</p>
+          <div class="reqs">
+            <div class="req"><span class="verb post">POST</span>/pay/confirm<span class="st">200 · HTML</span></div>
+            <div class="req"><span class="verb get">GET</span>/api/tickets/{{ticket_id}}<span class="st">200 · JSON</span></div>
+          </div>
+          <dl class="facts">
+            <dt>Body</dt><dd><code>view_state={{view_state}}&amp;code={{code}}&amp;reservation_id={{reservation_id}}&amp;csrf_token={{csrf_token}}</code></dd>
+            <dt>Think time</dt><dd>3–5 s</dd>
+            <dt>Assertions</dt><dd><ul><li>Status <b>200</b></li><li>El HTML contiene <code>data-ticket</code></li><li>El ticket devuelve <code>"status":"CONFIRMED"</code> — la assertion más importante del script</li></ul></dd>
+            <dt>Usa</dt><dd><b>view_state</b>, <b>code</b>, <b>reservation_id</b> y el <b>csrf_token</b> del paso 1</dd>
+            <dt>Nacen aquí</dt><dd><b>ticket_id</b> — atributo <code>data-ticket</code> del tag <code>&lt;body&gt;</code></dd>
+          </dl>
+        </article>
+
+        <article class="step">
+          <header><span class="num">PASO 13</span><h4>Cerrar sesión</h4></header>
+          <p class="act">Borra el evento de prueba y hace clic en “salir”</p>
+          <div class="reqs">
+            <div class="req"><span class="verb del">DELETE</span>/api/manage/events/{{event_id}}<span class="st">200 · opcional</span></div>
+            <div class="req"><span class="verb get">GET</span>/logout<span class="st">302</span></div>
+          </div>
+          <dl class="facts">
+            <dt>Headers</dt><dd><code>If-Match: {{event_rev_nueva}}</code> en el DELETE</dd>
+            <dt>Think time</dt><dd>2–3 s</dd>
+            <dt>Assertions</dt><dd>Status <b>302</b> con <code>Location: /</code></dd>
+          </dl>
+          <div class="note">
+            <span class="tag">Terminá siempre con logout</span>
+            <p>Libera el cupo de sesión de tu nodo al instante y evita que la siguiente iteración choque con el límite de 5.</p>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ============ 03 ============ -->
+    <section id="valores">
+      <h2 data-n="03">Referencia</h2>
+      <p class="h">Tabla maestra de valores dinámicos</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Valor</th><th>Nace en</th><th>Ubicación en la respuesta</th><th>Se envía en</th><th>Ubicación en el request</th><th>Extractor sugerido</th></tr></thead>
+          <tbody>
+            <tr><td><code>relampo_session</code></td><td>GET /</td><td>Header <code>Set-Cookie</code></td><td>Todos</td><td>Header <code>Cookie</code></td><td>Cookie manager automático</td></tr>
+            <tr><td><code>csrf_token</code></td><td>GET /</td><td>HTML, input oculto</td><td>POST /pay/confirm</td><td>Form body</td><td><code>(?is)name=["']csrf_token["'][^>]*value=["']([^"']+)["']</code></td></tr>
+            <tr><td><code>Etag</code></td><td>GET /static/app.js</td><td>Header <code>Etag</code></td><td>mismo request</td><td>Header <code>If-None-Match</code></td><td><code>(?im)^Etag:\s*([^\r\n]+)$</code> — opcional, no se valida</td></tr>
+            <tr><td><code>bearer</code></td><td>POST /api/auth</td><td>JSON</td><td>Toda la API</td><td>Header <code>Authorization</code></td><td>jsonpath <code>$.bearer</code></td></tr>
+            <tr><td><code>publish_token</code></td><td>GET /manage</td><td>HTML, input oculto</td><td>POST /api/manage/events</td><td>JSON, campo <code>publishToken</code></td><td><code>(?is)name=["']publish_token["'][^>]*value=["']([^"']+)["']</code></td></tr>
+            <tr><td><code>event_id</code></td><td>POST /api/manage/events</td><td>JSON</td><td>edit · PUT · DELETE · seats</td><td><b>Path</b> de la URL</td><td>jsonpath <code>$.event.id</code></td></tr>
+            <tr><td><code>event_rev</code></td><td>GET …/edit o el PUT</td><td>Header <code>ETag</code> o JSON</td><td>PUT y DELETE</td><td>Header <code>If-Match</code></td><td><code>(?im)^ETag:\s*"?([^"\r\n]+)"?$</code> o <code>$.event.rev</code></td></tr>
+            <tr><td><code>catalog_id</code></td><td>GET /events</td><td>HTML, JSON escapado en <code>data-config</code></td><td>GET /api/events</td><td><b>Query param</b></td><td><code>(?is)data-config="[^"]*?catalogId(?:&amp;#34;|&amp;quot;):(?:&amp;#34;|&amp;quot;)([A-Za-z0-9-]+)</code></td></tr>
+            <tr><td><code>seat_id</code></td><td>GET …/seats</td><td>JSON, array</td><td>POST /api/reservations</td><td>JSON body</td><td>jsonpath <code>$.seats[*].id</code> → aleatorio</td></tr>
+            <tr><td><code>X-Correlation-Id</code></td><td>GET …/seats</td><td><b>Header de respuesta</b></td><td>POST /api/reservations</td><td><b>Header de request</b></td><td><code>(?im)^X-Correlation-Id:\s*([^\r\n]+)$</code></td></tr>
+            <tr><td><code>reservation_id</code></td><td>POST /api/reservations</td><td>JSON</td><td>/pay/start y /pay/confirm</td><td>Form body</td><td>jsonpath <code>$.reservationId</code></td></tr>
+            <tr><td><b><code>relampo_token</code></b></td><td>POST /api/reservations</td><td>JSON <code>$.relampoToken</code></td><td>POST /pay/start</td><td>Form body <b>transformado</b></td><td>jsonpath + <a href="#token">preprocesador</a></td></tr>
+            <tr><td><code>state</code></td><td>POST /pay/start</td><td>Header <code>Location</code></td><td>authorize y callback</td><td>Query param</td><td><code>(?im)^Location:\s*[^\r\n]*?[?&amp;]state=([^&amp;#\r\n]+)</code> + url_decode</td></tr>
+            <tr><td><code>request</code></td><td>GET /pay/authorize</td><td>HTML, input oculto</td><td>POST /pay/continue</td><td>Form body</td><td><code>(?is)name=["']request["'][^>]*value=["']([^"']+)["']</code></td></tr>
+            <tr><td><code>x_correlation_id</code></td><td>GET /pay/authorize</td><td>HTML, input oculto</td><td>POST /pay/continue</td><td>Form body</td><td><code>(?is)name=["']x_correlation_id["'][^>]*value=["']([^"']+)["']</code></td></tr>
+            <tr><td><code>code</code></td><td>POST /pay/continue</td><td>Header <code>Location</code></td><td>callback y confirm</td><td>Query param + form body</td><td><code>(?im)^Location:\s*[^\r\n]*?[?&amp;]code=([^&amp;#\r\n]+)</code></td></tr>
+            <tr><td><code>view_state</code></td><td>GET /pay/callback</td><td>HTML, input oculto</td><td>POST /pay/confirm</td><td>Form body</td><td><code>(?is)name=["']view_state["'][^>]*value=["']([^"']+)["']</code></td></tr>
+            <tr><td><code>ticket_id</code></td><td>POST /pay/confirm</td><td>HTML, atributo del <code>&lt;body&gt;</code></td><td>GET /api/tickets/{id}</td><td><b>Path</b> de la URL</td><td><code>(?is)data-ticket=["']([^"']+)["']</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Valores de un solo uso o con vencimiento</h3>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Valor</th><th>Regla</th><th>Qué implica para el script</th></tr></thead>
+          <tbody>
+            <tr><td><code>publish_token</code></td><td>1 solo uso</td><td>Volver a <code>GET /manage</code> antes de cada creación</td></tr>
+            <tr><td><code>X-Correlation-Id</code></td><td>1 solo uso</td><td>Pedir seats antes de cada reserva</td></tr>
+            <tr><td><code>relampo_token</code></td><td>1 uso + <b>60 s</b></td><td>Reserva nueva en cada iteración, y pagar rápido</td></tr>
+            <tr><td><code>state</code> / flujo de pago</td><td>5 minutos</td><td>Completar el pago dentro de ese margen</td></tr>
+            <tr><td><code>event_rev</code></td><td>cambia en cada update</td><td>Re-correlacionar después de cada PUT</td></tr>
+            <tr><td><code>bearer</code></td><td>2 horas</td><td>Suficiente para cualquier prueba</td></tr>
+            <tr><td>Sesión</td><td>30 min de inactividad</td><td>Con think times normales no molesta</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ 04 ============ -->
+    <section id="extractores">
+      <h2 data-n="04">Sintaxis</h2>
+      <p class="h">Extractores por herramienta</p>
+
+      <h3>Desde el body HTML (regex)</h3>
+      <div class="tw"><table>
+        <thead><tr><th>Herramienta</th><th>Cómo</th></tr></thead>
+        <tbody>
+          <tr><td>Relampo</td><td><code>- type: regex</code> · <code>from: body</code> · <code>var: csrf_token</code> · <code>pattern: …</code> · <code>group: 1</code></td></tr>
+          <tr><td>JMeter</td><td><i>Regular Expression Extractor</i> → Field to check: <b>Body</b>, Template <code>$1$</code>, Match No. <code>1</code></td></tr>
+          <tr><td>k6</td><td><code>const csrf = res.body.match(/name="csrf_token" value="([^"]+)"/)[1];</code></td></tr>
+          <tr><td>Gatling</td><td><code>.check(regex("""name="csrf_token" value="([^"]+)"""").saveAs("csrf_token"))</code></td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Desde el body JSON</h3>
+      <div class="tw"><table>
+        <thead><tr><th>Herramienta</th><th>Cómo</th></tr></thead>
+        <tbody>
+          <tr><td>Relampo</td><td><code>- type: jsonpath</code> · <code>expression: $.bearer</code></td></tr>
+          <tr><td>JMeter</td><td><i>JSON Extractor</i> → JSON Path <code>$.bearer</code></td></tr>
+          <tr><td>k6</td><td><code>const bearer = res.json().bearer;</code></td></tr>
+          <tr><td>Gatling</td><td><code>.check(jsonPath("$.bearer").saveAs("bearer"))</code></td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Desde un header de respuesta</h3>
+      <div class="tw"><table>
+        <thead><tr><th>Herramienta</th><th>Cómo</th></tr></thead>
+        <tbody>
+          <tr><td>Relampo</td><td><code>- type: regex</code> · <code>from: headers</code> · <code>pattern: (?im)^X-Correlation-Id:\s*([^\r\n]+)$</code></td></tr>
+          <tr><td>JMeter</td><td><i>Regular Expression Extractor</i> → Field to check: <b>Response Headers</b></td></tr>
+          <tr><td>k6</td><td><code>const corr = res.headers['X-Correlation-Id'];</code></td></tr>
+          <tr><td>Gatling</td><td><code>.check(header("X-Correlation-Id").saveAs("corr"))</code></td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Desde el <code>Location</code> de un redirect</h3>
+      <div class="note crit">
+        <span class="tag">Primero desactivá el seguimiento de redirects</span>
+        <p>Si tu herramienta sigue el 302 automáticamente, nunca vas a ver el header <code>Location</code> del que hay que extraer.</p>
+      </div>
+      <div class="tw" style="margin-top:14px"><table>
+        <thead><tr><th>Herramienta</th><th>Cómo</th></tr></thead>
+        <tbody>
+          <tr><td>Relampo</td><td><code>follow_redirects: false</code> + extractor regex <code>from: headers</code> con <code>transform: url_decode</code></td></tr>
+          <tr><td>JMeter</td><td>Destildar <i>Follow Redirects</i> + Regex Extractor sobre Response Headers + <code>__urldecode()</code></td></tr>
+          <tr><td>k6</td><td><code>http.post(url, body, { redirects: 0 })</code> y luego <code>decodeURIComponent(res.headers['Location'].match(/state=([^&amp;]+)/)[1])</code></td></tr>
+          <tr><td>Gatling</td><td><code>.disableFollowRedirect.check(header("Location").transform(…).saveAs("state"))</code></td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- ============ 05 ============ -->
+    <section id="token">
+      <h2 data-n="05">Caso especial</h2>
+      <p class="h">El valor encriptado: <code>relampo_token</code></p>
+
+      <h3>El problema</h3>
+      <pre><code>Respuesta de POST /api/reservations
+  "relampoToken": "9788897b868175dc…"       ← valor A (64 caracteres)
+
+Request de POST /pay/start
+  relampo_token=4b5254595549584f…           ← valor B (128 caracteres)</code></pre>
+      <p><b>A ≠ B.</b> El valor B no aparece en ninguna respuesta: lo calcula el JavaScript del navegador antes de enviar el formulario. Si correlacionás A y lo reenviás tal cual, el servidor responde <code>403 you sent the RAW relampo_token (value A)</code>.</p>
+      <p>Ningún correlador automático puede resolver esto. Hay que escribir código.</p>
+
+      <h3>El método</h3>
+      <p>Por cada carácter de A: se toma su código numérico, se mezcla con <b>XOR</b> contra el código del carácter que le toca de la sal, y el resultado se escribe en hexadecimal de dos dígitos.</p>
+      <p>La sal es <code>relampo-public-salt-v1</code> — pública, está en <code>/static/app.js</code>. Cuando se termina (22 caracteres) vuelve a empezar. Como cada carácter produce 2 dígitos, <b>B siempre mide el doble que A</b>.</p>
+      <div class="tw" style="max-width:520px">
+        <table>
+          <thead><tr><th>Carácter de A</th><th>Carácter de la sal</th><th>XOR</th><th>En hex</th></tr></thead>
+          <tbody>
+            <tr><td><code>9</code> (57)</td><td><code>r</code> (114)</td><td>75</td><td><code>4b</code></td></tr>
+            <tr><td><code>7</code> (55)</td><td><code>e</code> (101)</td><td>82</td><td><code>52</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>→ B empieza con <code>4b52…</code></p>
+
+      <h3>Relampo — bloque <code>spark</code> en <code>POST /pay/start</code></h3>
+      <pre><code>// PASO 1 — Leer el token que extrajimos en el request anterior
+var tokenA = vars.get("relampo_token_a");
+
+// PASO 2 — Transformarlo (misma lógica que app.js en el navegador)
+var salt = "relampo-public-salt-v1";
+var tokenB = "";
+
+for (var i = 0; i &lt; tokenA.length; i++) {
+  var x = tokenA.charCodeAt(i) ^ salt.charCodeAt(i % salt.length);
+  tokenB = tokenB + (x &lt; 16 ? "0" : "") + x.toString(16);
+}
+
+// PASO 3 — Guardarlo para usarlo en el body como {{relampo_token_b}}
+vars.set("relampo_token_b", tokenB);</code></pre>
+
+      <h3>JMeter — JSR223 PreProcessor (Groovy)</h3>
+      <pre><code>def tokenA = vars.get("relampo_token_a")
+def salt = "relampo-public-salt-v1"
+def tokenB = new StringBuilder()
+
+for (int i = 0; i &lt; tokenA.length(); i++) {
+    int x = ((int) tokenA.charAt(i)) ^ ((int) salt.charAt(i % salt.length()))
+    tokenB.append(String.format("%02x", x))
+}
+
+vars.put("relampo_token_b", tokenB.toString())</code></pre>
+
+      <h3>k6 — función JavaScript</h3>
+      <pre><code>function signRelampoToken(tokenA) {
+  const salt = "relampo-public-salt-v1";
+  let tokenB = "";
+  for (let i = 0; i &lt; tokenA.length; i++) {
+    const x = tokenA.charCodeAt(i) ^ salt.charCodeAt(i % salt.length);
+    tokenB += x.toString(16).padStart(2, "0");
+  }
+  return tokenB;
+}
+
+const tokenA = res.json().relampoToken;
+const tokenB = signRelampoToken(tokenA);</code></pre>
+
+      <h3>Gatling — función Scala</h3>
+      <pre><code>def signRelampoToken(tokenA: String): String = {
+  val salt = "relampo-public-salt-v1"
+  val sb = new StringBuilder
+  for (i &lt;- tokenA.indices) {
+    val x = tokenA(i) ^ salt(i % salt.length)
+    sb.append(f"$x%02x")
+  }
+  sb.toString
+}
+
+.exec(session =&gt; session.set("tokenB", signRelampoToken(session("tokenA").as[String])))</code></pre>
+
+      <h3>Cómo verificar que lo hiciste bien</h3>
+      <ol>
+        <li>El valor B mide <b>exactamente el doble</b> que A: 128 contra 64 caracteres.</li>
+        <li>El <code>POST /pay/start</code> responde <b>302</b> con <code>Location: /pay/authorize?state=…</code></li>
+        <li>Corré <b>dos iteraciones seguidas</b>: si la segunda también pasa, la transformación está bien. El token es de un solo uso, así que un valor grabado fallaría.</li>
+      </ol>
+
+      <div class="note">
+        <span class="tag">Modo avanzado</span>
+        <p>Si la app corre con <code>RELAMPO_TOKEN_MODE=hmac</code>, la transformación pasa a ser <code>B = hex(HMAC-SHA256(A, salt))</code>. En k6: <code>crypto.hmac('sha256', salt, tokenA, 'hex')</code>. En JMeter: <code>javax.crypto.Mac</code> con <code>HmacSHA256</code>.</p>
+      </div>
+    </section>
+
+    <!-- ============ 06 ============ -->
+    <section id="assertions">
+      <h2 data-n="06">Validación</h2>
+      <p class="h">Assertions</p>
+      <p>Un script sin assertions <b>miente</b>: reporta éxito aunque el servidor esté devolviendo errores.</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Tipo de request</th><th>Validá siempre</th><th>Validá además</th></tr></thead>
+          <tbody>
+            <tr><td>Página HTML</td><td>Status 200</td><td>Un texto que solo aparece si la página cargó bien, y el input oculto que vas a extraer</td></tr>
+            <tr><td>API JSON</td><td>Status 200 / 201</td><td>Que exista el campo que vas a correlacionar</td></tr>
+            <tr><td>Redirect</td><td>Status 302</td><td>Que el <code>Location</code> contenga el parámetro que vas a extraer</td></tr>
+            <tr><td>Confirmación final</td><td>Status 200</td><td><code>"status":"CONFIRMED"</code> en el ticket</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note">
+        <span class="tag">Assertion negativa recomendada</span>
+        <p>En todos los requests: que el body <b>no</b> contenga <code>correlationError</code>. Si aparece, algún valor se correlacionó mal y el script está “pasando” sobre un flujo roto.</p>
+      </div>
+
+      <h3>Errores que devuelve la app</h3>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Status</th><th>variable</th><th>Qué te está diciendo</th></tr></thead>
+          <tbody>
+            <tr><td>401</td><td><code>relampo_session</code></td><td>Falta la cookie o expiró la sesión</td></tr>
+            <tr><td>401</td><td><code>bearer</code></td><td>Token ausente, mal copiado o de otra sesión</td></tr>
+            <tr><td>400</td><td><code>catalog_id</code></td><td>El catalogId no es el de esta sesión</td></tr>
+            <tr><td>403</td><td><code>x_correlation_id</code></td><td>No reenviaste el header de la respuesta de seats</td></tr>
+            <tr><td>403</td><td><code>relampo_token</code></td><td>Mandaste el crudo, mal transformado, ya usado o expirado</td></tr>
+            <tr><td>403</td><td><code>state</code> / <code>code</code></td><td>Extrajiste mal el <code>Location</code> — ¿te comiste el 302?</td></tr>
+            <tr><td>403</td><td><code>csrf_token</code></td><td>Perdiste el valor del paso 1</td></tr>
+            <tr><td>428 / 412</td><td><code>if_match</code></td><td>Falta la rev, o mandaste una vieja</td></tr>
+            <tr><td>409</td><td><code>events_limit</code></td><td>El usuario ya tiene 5 eventos</td></tr>
+            <tr><td>429</td><td><code>vus_per_node</code></td><td>Más de 5 sesiones concurrentes desde tu IP</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Todos los errores traen <code>received</code> y <code>expected</code> para que compares. Con el header <code>X-Practice-Hints: true</code> agregan un campo <code>hint</code> con el lugar exacto de extracción.</p>
+    </section>
+
+    <!-- ============ 07 ============ -->
+    <section id="think">
+      <h2 data-n="07">Realismo</h2>
+      <p class="h">Think times y perfil de carga</p>
+      <p>Usá una variación de ±30 % para que los usuarios virtuales no queden sincronizados.</p>
+      <div class="tw" style="max-width:620px">
+        <table>
+          <thead><tr><th>Momento</th><th>Tiempo</th></tr></thead>
+          <tbody>
+            <tr><td>Leer una página</td><td>3–8 s</td></tr>
+            <tr><td>Llenar un formulario corto (login)</td><td>10–15 s</td></tr>
+            <tr><td>Llenar un formulario largo (crear evento)</td><td>15–25 s</td></tr>
+            <tr><td>Elegir de una lista</td><td>5–8 s</td></tr>
+            <tr><td>Entre requests automáticos (redirects, fetch de la misma página)</td><td>0 s</td></tr>
+            <tr><td><b>Entre reservar y pagar</b></td><td><b>máximo 60 s</b></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Con el límite de 5 sesiones por nodo, una prueba razonable es <b>5 VUs por nodo</b>, rampa de 30 s y 10–15 minutos de duración. Con la ejecución distribuida de Relampo en 4 nodos, llegás a 20 VUs.</p>
+    </section>
+
+    <!-- ============ 08 ============ -->
+    <section id="checklist">
+      <h2 data-n="08">Cierre</h2>
+      <p class="h">Checklist antes de dar el script por terminado</p>
+      <ul class="chk">
+        <li>Corre <b>dos iteraciones seguidas</b> sin errores — la prueba real de la correlación</li>
+        <li>Ningún valor dinámico quedó escrito a mano: buscá <code>EV-</code>, <code>CAT-</code>, <code>TCK-</code>, <code>RES-</code>, <code>PUB-</code> en el script</li>
+        <li>El <code>csrf_token</code> del paso 1 llega hasta el paso 12</li>
+        <li>El <code>relampo_token</code> se transforma con el preprocesador, no se envía crudo</li>
+        <li>Los redirects del pago están con “seguir redirects” desactivado donde hace falta</li>
+        <li>Hay assertions en todos los pasos, incluida <code>"status":"CONFIRMED"</code> al final</li>
+        <li>Hay think times entre las acciones del usuario</li>
+        <li>Usuario y datos están parametrizados por CSV, no hardcodeados</li>
+        <li>El flujo termina en <code>/logout</code></li>
+        <li>Sacaste el header <code>X-Practice-Hints</code> de la versión final</li>
+      </ul>
+    </section>
+
+    <!-- ============ 09 ============ -->
+    <section id="niveles">
+      <h2 data-n="09">Práctica</h2>
+      <p class="h">Ejercicios por nivel</p>
+      <div class="grid2">
+        <div class="card"><h4>1 · Básico — login y navegar</h4><p>Resolver <code>relampo_session</code>, <code>csrf_token</code> y <code>bearer</code>.</p></div>
+        <div class="card"><h4>2 · Intermedio — crear y editar</h4><p><code>publish_token</code> de un solo uso, <code>event_id</code> y <code>event_rev</code> con <code>If-Match</code> (428 y 412).</p></div>
+        <div class="card"><h4>3 · Avanzado — comprar</h4><p><code>catalog_id</code> en JSON escapado, <code>X-Correlation-Id</code>, <code>state</code> y <code>code</code> de los redirects, <code>view_state</code>.</p></div>
+        <div class="card"><h4>4 · Experto — pago completo</h4><p><code>relampo_token</code> con preprocesador, más las reglas de un solo uso y los 60 segundos.</p></div>
+        <div class="card"><h4>5 · Maestro — prueba real</h4><p>Todo lo anterior con datos parametrizados, ocurrencias aleatorias, think times variables y assertions completas.</p></div>
+      </div>
+    </section>
+
+    <footer>
+      RelampoTickets — app de práctica para correlación en pruebas de performance.
+      Guía verificada contra la aplicación en ejecución.
+    </footer>
+  </main>
+</div>
