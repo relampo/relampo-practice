@@ -7,6 +7,8 @@ Aplica a **Relampo, JMeter, k6 y Gatling** — la lógica es la misma, solo camb
 sintaxis. Los flujos y las grabaciones pueden variar; lo que no cambia son los
 principios de esta guía.
 
+*(English version: [SCRIPTING-GUIDE.md](SCRIPTING-GUIDE.md))*
+
 ---
 
 ## 1. Antes de grabar
