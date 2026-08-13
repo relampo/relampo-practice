@@ -296,12 +296,12 @@
         <table>
           <thead><tr><th>Punto</th><th>Por qué importa</th></tr></thead>
           <tbody>
-            <tr><td><b>Grabá en ventana de incógnito</b></td><td>Con caché limpia el navegador pide <code>/static/app.js</code>, donde nace el <code>Etag</code> y donde se lee la función de encriptación. Con caché sucia ese request no aparece.</td></tr>
-            <tr><td><b>Máximo 5 sesiones por nodo</b></td><td>La app limita 5 sesiones concurrentes por IP. La sexta recibe <code>429 vus_per_node</code>. Un script abandonado sin <code>/logout</code> libera su cupo a los 90 s.</td></tr>
-            <tr><td><b>Usuarios de prueba</b></td><td><code>user001</code> … <code>user500</code> con <code>Pass001!</code> … <code>Pass500!</code>. Tu CSV: <code>for i in $(seq -w 1 500); do echo "user$i,Pass$i!"; done</code></td></tr>
+            <tr><td><b>Grabar en ventana de incógnito</b></td><td>Con caché limpia el navegador pide <code>/static/app.js</code>, donde nace el <code>Etag</code> y donde se lee la función de encriptación. Con caché sucia ese request no aparece.</td></tr>
+            <tr><td><b>Máximo 5 sesiones por nodo</b></td><td>La aplicación limita 5 sesiones concurrentes por IP. La sexta recibe <code>429 vus_per_node</code>. Un script abandonado sin <code>/logout</code> libera su cupo a los 90 s.</td></tr>
+            <tr><td><b>Usuarios de prueba</b></td><td><code>user001</code> … <code>user500</code> con <code>Pass001!</code> … <code>Pass500!</code>. Para generar el CSV: <code>for i in $(seq -w 1 500); do echo "user$i,Pass$i!"; done</code></td></tr>
             <tr><td><b>Un usuario por VU</b></td><td>Cada sesión tiene su propio catálogo y asientos: no hay colisiones entre usuarios virtuales.</td></tr>
-            <tr><td><b>Grabá de corrido</b></td><td>El token de pago expira a los 60 s. Si te demorás entre reservar y pagar, grabás un 403.</td></tr>
-            <tr><td><b>Activá las pistas al depurar</b></td><td>Con el header <code>X-Practice-Hints: true</code> los errores te dicen de dónde extraer el valor que falló. Sacalo en la versión final.</td></tr>
+            <tr><td><b>Grabar de corrido</b></td><td>El token de pago expira a los 60 s. Si hay demora entre reservar y pagar, se graba un 403.</td></tr>
+            <tr><td><b>Activar las pistas al depurar</b></td><td>Con el header <code>X-Practice-Hints: true</code> los errores indican de dónde extraer el valor que falló. Conviene quitarlo en la versión final.</td></tr>
           </tbody>
         </table>
       </div>
@@ -311,10 +311,10 @@
     <section id="flujo">
       <h2 data-n="02">Recorrido</h2>
       <p class="h">El flujo base</p>
-      <p>Estas 13 acciones capturan prácticamente todos los valores dinámicos de la app. Cada paso indica qué hace el usuario, qué requests genera, cuánto esperar y qué validar.</p>
+      <p>Estas 13 acciones capturan prácticamente todos los valores dinámicos de la aplicación. Cada paso indica qué hace el usuario, qué requests genera, cuánto esperar y qué validar.</p>
       <div class="note">
         <span class="tag">Think time</span>
-        <p>Es el tiempo que una persona real tarda en leer, decidir o tipear. Va <b>después</b> de recibir la respuesta y <b>antes</b> de la siguiente acción. Sin think times, el script no simula usuarios: simula una inundación.</p>
+        <p>Es el tiempo que una persona real tarda en leer, decidir o escribir. Va <b>después</b> de recibir la respuesta y <b>antes</b> de la siguiente acción. Sin think times, el script no simula usuarios: simula una inundación.</p>
       </div>
 
       <div class="steps" style="margin-top:22px">
@@ -334,7 +334,7 @@
           </dl>
           <div class="note">
             <span class="tag">El request más importante</span>
-            <p>Acá nace la única cookie de la app —que necesitan todos los requests siguientes— y el <code>csrf_token</code>, que recién se usa en el paso 12. Dejá activado el manejo automático de cookies de tu herramienta.</p>
+            <p>Aquí nace la única cookie de la aplicación —que necesitan todos los requests siguientes— y el <code>csrf_token</code>, que recién se usa en el paso 12. Conviene dejar activado el manejo automático de cookies de la herramienta.</p>
           </div>
         </article>
 
@@ -354,7 +354,7 @@
 
         <article class="step">
           <header><span class="num">PASO 3</span><h4>Ver “Mis eventos”</h4></header>
-          <p class="act">Tras el login la app lo lleva a su panel de eventos</p>
+          <p class="act">Tras el login la aplicación lo lleva a su panel de eventos</p>
           <div class="reqs">
             <div class="req"><span class="verb get">GET</span>/manage<span class="st">200 · HTML</span></div>
             <div class="req"><span class="verb get">GET</span>/api/manage/events<span class="st">200 · JSON</span></div>
@@ -369,7 +369,7 @@
 
         <article class="step">
           <header><span class="num">PASO 4</span><h4>Crear un evento</h4></header>
-          <p class="act">Llena nombre, lugar y fecha, hace clic en “Publicar evento”</p>
+          <p class="act">Completa nombre, lugar y fecha, hace clic en “Publicar evento”</p>
           <div class="reqs">
             <div class="req"><span class="verb post">POST</span>/api/manage/events<span class="st">201 · JSON</span></div>
           </div>
@@ -382,7 +382,7 @@
           </dl>
           <div class="note">
             <span class="tag">Parametrizá</span>
-            <p>Usá un nombre variable (<code>Evento-${VU}-${iteración}</code>) en vez de texto fijo. Y recordá el límite: <b>5 eventos por usuario</b>; el sexto devuelve <code>409 events_limit</code>.</p>
+            <p>Conviene usar un nombre variable (<code>Evento-${VU}-${iteración}</code>) en lugar de texto fijo. Y tener presente el límite: <b>5 eventos por usuario</b>; el sexto devuelve <code>409 events_limit</code>.</p>
           </div>
         </article>
 
@@ -401,7 +401,7 @@
 
         <article class="step">
           <header><span class="num">PASO 6</span><h4>Guardar cambios</h4></header>
-          <p class="act">Cambia el nombre o el lugar, hace clic en “Guardar cambios”</p>
+          <p class="act">Modifica el nombre o el lugar, hace clic en “Guardar cambios”</p>
           <div class="reqs">
             <div class="req"><span class="verb put">PUT</span>/api/manage/events/{{event_id}}<span class="st">200 · JSON</span></div>
           </div>
@@ -413,7 +413,7 @@
           </dl>
           <div class="note crit">
             <span class="tag">Bloqueo optimista</span>
-            <p>Sin el header <code>If-Match</code> → <b>428</b>. Con una versión vieja → <b>412</b>. Cada modificación devuelve una <code>rev</code> nueva: correlacioná siempre la última.</p>
+            <p>Sin el header <code>If-Match</code> → <b>428</b>. Con una versión vieja → <b>412</b>. Cada modificación devuelve una <code>rev</code> nueva: hay que correlacionar siempre la última.</p>
           </div>
         </article>
 
@@ -432,7 +432,7 @@
 
         <article class="step">
           <header><span class="num">PASO 8</span><h4>Ver catálogo y asientos</h4></header>
-          <p class="act">La página carga los eventos y elige un asiento</p>
+          <p class="act">La página carga los eventos y se elige un asiento</p>
           <div class="reqs">
             <div class="req"><span class="verb get">GET</span>/api/events?catalogId={{catalog_id}}<span class="st">200 · JSON</span></div>
             <div class="req"><span class="verb get">GET</span>/api/events/{{event_id}}/seats<span class="st">200 · JSON</span></div>
@@ -444,13 +444,13 @@
           </dl>
           <div class="note">
             <span class="tag">Ocurrencia aleatoria</span>
-            <p>No uses índices fijos como <code>$.seats[3].id</code>. Acá funciona porque cada sesión tiene su propio stock, pero contra un sitio real es la causa número uno de scripts que fallan en la segunda iteración.</p>
+            <p>Conviene evitar los índices fijos como <code>$.seats[3].id</code>. Aquí funcionan porque cada sesión tiene su propio stock, pero contra un sitio real son la causa número uno de scripts que fallan en la segunda iteración.</p>
           </div>
         </article>
 
         <article class="step">
           <header><span class="num">PASO 9</span><h4>Reservar el asiento</h4></header>
-          <p class="act">La app reserva automáticamente al cargar la página</p>
+          <p class="act">La aplicación reserva automáticamente al cargar la página</p>
           <div class="reqs">
             <div class="req"><span class="verb post">POST</span>/api/reservations<span class="st">201 · JSON</span></div>
           </div>
@@ -477,8 +477,8 @@
           </dl>
           <div class="note crit">
             <span class="tag">Este paso no se resuelve con extractores</span>
-            <p>El token que recibiste en el paso 9 <b>no es</b> el que hay que enviar: el navegador lo transforma con JavaScript. El método y el código para cada herramienta están en la <a href="#token">sección 05</a>.</p>
-            <p>Además: <b>desactivá el seguimiento automático de redirects</b> en este request, o tu herramienta se come el 302 y no vas a poder leer el <code>state</code>.</p>
+            <p>El token recibido en el paso 9 <b>no es</b> el que hay que enviar: el navegador lo transforma con JavaScript. El método y el código para cada herramienta están en la <a href="#token">sección 05</a>.</p>
+            <p>Además: <b>desactivar el seguimiento automático de redirects</b> en este request, o la herramienta consume el 302 y el <code>state</code> queda inaccesible.</p>
           </div>
         </article>
 
@@ -527,8 +527,8 @@
             <dt>Assertions</dt><dd>Status <b>302</b> con <code>Location: /</code></dd>
           </dl>
           <div class="note">
-            <span class="tag">Terminá siempre con logout</span>
-            <p>Libera el cupo de sesión de tu nodo al instante y evita que la siguiente iteración choque con el límite de 5.</p>
+            <span class="tag">Terminar siempre con logout</span>
+            <p>Libera el cupo de sesión del nodo al instante y evita que la siguiente iteración choque con el límite de 5.</p>
           </div>
         </article>
 
@@ -622,8 +622,8 @@
 
       <h3>Desde el <code>Location</code> de un redirect</h3>
       <div class="note crit">
-        <span class="tag">Primero desactivá el seguimiento de redirects</span>
-        <p>Si tu herramienta sigue el 302 automáticamente, nunca vas a ver el header <code>Location</code> del que hay que extraer.</p>
+        <span class="tag">Primero hay que desactivar el seguimiento de redirects</span>
+        <p>Si la herramienta sigue el 302 automáticamente, el header <code>Location</code> del que hay que extraer nunca queda visible.</p>
       </div>
       <div class="tw" style="margin-top:14px"><table>
         <thead><tr><th>Herramienta</th><th>Cómo</th></tr></thead>
@@ -647,7 +647,7 @@
 
 Request de POST /pay/start
   relampo_token=4b5254595549584f…           ← valor B (128 caracteres)</code></pre>
-      <p><b>A ≠ B.</b> El valor B no aparece en ninguna respuesta: lo calcula el JavaScript del navegador antes de enviar el formulario. Si correlacionás A y lo reenviás tal cual, el servidor responde <code>403 you sent the RAW relampo_token (value A)</code>.</p>
+      <p><b>A ≠ B.</b> El valor B no aparece en ninguna respuesta: lo calcula el JavaScript del navegador antes de enviar el formulario. Si se correlaciona A y se reenvía tal cual, el servidor responde <code>403 you sent the RAW relampo_token (value A)</code>.</p>
       <p>Ningún correlador automático puede resolver esto. Hay que escribir código.</p>
 
       <h3>El método</h3>
@@ -723,7 +723,7 @@ const tokenB = signRelampoToken(tokenA);</code></pre>
       <ol>
         <li>El valor B mide <b>exactamente el doble</b> que A: 128 contra 64 caracteres.</li>
         <li>El <code>POST /pay/start</code> responde <b>302</b> con <code>Location: /pay/authorize?state=…</code></li>
-        <li>Corré <b>dos iteraciones seguidas</b>: si la segunda también pasa, la transformación está bien. El token es de un solo uso, así que un valor grabado fallaría.</li>
+        <li>Ejecutar <b>dos iteraciones seguidas</b>: si la segunda también pasa, la transformación está bien. El token es de un solo uso, así que un valor grabado fallaría.</li>
       </ol>
 
       <div class="note">
@@ -741,9 +741,9 @@ const tokenB = signRelampoToken(tokenA);</code></pre>
         <table>
           <thead><tr><th>Tipo de request</th><th>Validá siempre</th><th>Validá además</th></tr></thead>
           <tbody>
-            <tr><td>Página HTML</td><td>Status 200</td><td>Un texto que solo aparece si la página cargó bien, y el input oculto que vas a extraer</td></tr>
-            <tr><td>API JSON</td><td>Status 200 / 201</td><td>Que exista el campo que vas a correlacionar</td></tr>
-            <tr><td>Redirect</td><td>Status 302</td><td>Que el <code>Location</code> contenga el parámetro que vas a extraer</td></tr>
+            <tr><td>Página HTML</td><td>Status 200</td><td>Un texto que solo aparece si la página cargó bien, y el input oculto que se va a extraer</td></tr>
+            <tr><td>API JSON</td><td>Status 200 / 201</td><td>Que exista el campo que se va a correlacionar</td></tr>
+            <tr><td>Redirect</td><td>Status 302</td><td>Que el <code>Location</code> contenga el parámetro que se va a extraer</td></tr>
             <tr><td>Confirmación final</td><td>Status 200</td><td><code>"status":"CONFIRMED"</code> en el ticket</td></tr>
           </tbody>
         </table>
@@ -761,24 +761,24 @@ const tokenB = signRelampoToken(tokenA);</code></pre>
             <tr><td>401</td><td><code>relampo_session</code></td><td>Falta la cookie o expiró la sesión</td></tr>
             <tr><td>401</td><td><code>bearer</code></td><td>Token ausente, mal copiado o de otra sesión</td></tr>
             <tr><td>400</td><td><code>catalog_id</code></td><td>El catalogId no es el de esta sesión</td></tr>
-            <tr><td>403</td><td><code>x_correlation_id</code></td><td>No reenviaste el header de la respuesta de seats</td></tr>
-            <tr><td>403</td><td><code>relampo_token</code></td><td>Mandaste el crudo, mal transformado, ya usado o expirado</td></tr>
-            <tr><td>403</td><td><code>state</code> / <code>code</code></td><td>Extrajiste mal el <code>Location</code> — ¿te comiste el 302?</td></tr>
-            <tr><td>403</td><td><code>csrf_token</code></td><td>Perdiste el valor del paso 1</td></tr>
-            <tr><td>428 / 412</td><td><code>if_match</code></td><td>Falta la rev, o mandaste una vieja</td></tr>
+            <tr><td>403</td><td><code>x_correlation_id</code></td><td>No se reenvió el header de la respuesta de seats</td></tr>
+            <tr><td>403</td><td><code>relampo_token</code></td><td>Se envió el crudo, mal transformado, ya usado o expirado</td></tr>
+            <tr><td>403</td><td><code>state</code> / <code>code</code></td><td>Extracción incorrecta del <code>Location</code> — ¿se consumió el 302?</td></tr>
+            <tr><td>403</td><td><code>csrf_token</code></td><td>Se perdió el valor del paso 1</td></tr>
+            <tr><td>428 / 412</td><td><code>if_match</code></td><td>Falta la rev, o se envió una vieja</td></tr>
             <tr><td>409</td><td><code>events_limit</code></td><td>El usuario ya tiene 5 eventos</td></tr>
             <tr><td>429</td><td><code>vus_per_node</code></td><td>Más de 5 sesiones concurrentes desde tu IP</td></tr>
           </tbody>
         </table>
       </div>
-      <p>Todos los errores traen <code>received</code> y <code>expected</code> para que compares. Con el header <code>X-Practice-Hints: true</code> agregan un campo <code>hint</code> con el lugar exacto de extracción.</p>
+      <p>Todos los errores traen <code>received</code> y <code>expected</code> para poder comparar. Con el header <code>X-Practice-Hints: true</code> agregan un campo <code>hint</code> con el lugar exacto de extracción.</p>
     </section>
 
     <!-- ============ 07 ============ -->
     <section id="think">
       <h2 data-n="07">Realismo</h2>
       <p class="h">Think times y perfil de carga</p>
-      <p>Usá una variación de ±30 % para que los usuarios virtuales no queden sincronizados.</p>
+      <p>Conviene aplicar una variación de ±30 % para que los usuarios virtuales no queden sincronizados.</p>
       <div class="tw" style="max-width:620px">
         <table>
           <thead><tr><th>Momento</th><th>Tiempo</th></tr></thead>
@@ -792,7 +792,7 @@ const tokenB = signRelampoToken(tokenA);</code></pre>
           </tbody>
         </table>
       </div>
-      <p>Con el límite de 5 sesiones por nodo, una prueba razonable es <b>5 VUs por nodo</b>, rampa de 30 s y 10–15 minutos de duración. Con la ejecución distribuida de Relampo en 4 nodos, llegás a 20 VUs.</p>
+      <p>Con el límite de 5 sesiones por nodo, una prueba razonable es <b>5 VUs por nodo</b>, rampa de 30 s y 10–15 minutos de duración. Con la ejecución distribuida de Relampo en 4 nodos, se llega a 20 VUs.</p>
     </section>
 
     <!-- ============ 08 ============ -->
@@ -801,7 +801,7 @@ const tokenB = signRelampoToken(tokenA);</code></pre>
       <p class="h">Checklist antes de dar el script por terminado</p>
       <ul class="chk">
         <li>Corre <b>dos iteraciones seguidas</b> sin errores — la prueba real de la correlación</li>
-        <li>Ningún valor dinámico quedó escrito a mano: buscá <code>EV-</code>, <code>CAT-</code>, <code>TCK-</code>, <code>RES-</code>, <code>PUB-</code> en el script</li>
+        <li>Ningún valor dinámico quedó escrito a mano: buscar <code>EV-</code>, <code>CAT-</code>, <code>TCK-</code>, <code>RES-</code>, <code>PUB-</code> en el script</li>
         <li>El <code>csrf_token</code> del paso 1 llega hasta el paso 12</li>
         <li>El <code>relampo_token</code> se transforma con el preprocesador, no se envía crudo</li>
         <li>Los redirects del pago están con “seguir redirects” desactivado donde hace falta</li>
@@ -809,7 +809,7 @@ const tokenB = signRelampoToken(tokenA);</code></pre>
         <li>Hay think times entre las acciones del usuario</li>
         <li>Usuario y datos están parametrizados por CSV, no hardcodeados</li>
         <li>El flujo termina en <code>/logout</code></li>
-        <li>Sacaste el header <code>X-Practice-Hints</code> de la versión final</li>
+        <li>Se quitó el header <code>X-Practice-Hints</code> de la versión final</li>
       </ul>
     </section>
 

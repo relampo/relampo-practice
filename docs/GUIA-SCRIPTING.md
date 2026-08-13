@@ -3,7 +3,7 @@
 Cómo construir un script de performance sobre **https://practice.relampo.com**, paso a
 paso, con think times, assertions y correlación de valores dinámicos.
 
-Vale para **Relampo, JMeter, k6 y Gatling** — la lógica es la misma, solo cambia la
+Aplica a **Relampo, JMeter, k6 y Gatling** — la lógica es la misma, solo cambia la
 sintaxis. Los flujos y las grabaciones pueden variar; lo que no cambia son los
 principios de esta guía.
 
@@ -13,24 +13,24 @@ principios de esta guía.
 
 | Punto | Por qué importa |
 |---|---|
-| **Grabá en ventana de incógnito** | Con caché limpia el navegador pide `/static/app.js`, que es donde nace el `Etag` (y donde se lee la función de encriptación). Con caché sucia ese request no aparece. |
-| **Máximo 5 sesiones por nodo (IP)** | La app limita 5 sesiones concurrentes por máquina. La sexta recibe `429 vus_per_node`. Si abandonás un script sin `/logout`, el cupo se libera solo a los 90 s. |
-| **Usuarios de prueba** | `user001` … `user500`, contraseñas `Pass001!` … `Pass500!`. Armá tu CSV: `for i in $(seq -w 1 500); do echo "user$i,Pass$i!"; done` |
+| **Grabar en ventana de incógnito** | Con caché limpia el navegador pide `/static/app.js`, que es donde nace el `Etag` (y donde se lee la función de encriptación). Con caché sucia ese request no aparece. |
+| **Máximo 5 sesiones por nodo (IP)** | La aplicación limita 5 sesiones concurrentes por máquina. La sexta recibe `429 vus_per_node`. Si un script se abandona sin `/logout`, el cupo se libera solo a los 90 s. |
+| **Usuarios de prueba** | `user001` … `user500`, contraseñas `Pass001!` … `Pass500!`. Para generar el CSV: `for i in $(seq -w 1 500); do echo "user$i,Pass$i!"; done` |
 | **Un usuario por VU** | Cada sesión tiene su propio catálogo y asientos; no hay colisiones entre usuarios virtuales. |
-| **Hacé la grabación de corrido** | El token de pago expira a los 60 s. Si te demorás entre reservar y pagar, grabás un 403. |
-| **Activá las pistas mientras depurás** | Enviá el header `X-Practice-Hints: true` y los errores te dicen exactamente de dónde extraer el valor que falló. Sacalo para la prueba final. |
+| **Grabar de corrido** | El token de pago expira a los 60 s. Si hay demora entre reservar y pagar, se graba un 403. |
+| **Activar las pistas al depurar** | Enviando el header `X-Practice-Hints: true`, los errores indican exactamente de dónde extraer el valor que falló. Conviene quitarlo en la versión final. |
 
 ---
 
 ## 2. El flujo base
 
-Este recorrido de **12 acciones** captura prácticamente todos los valores dinámicos de
-la app. Cada paso indica: qué hace el usuario, qué requests genera, cuánto esperar
-(think time), qué validar (assertions) y qué valores nacen o se usan.
+Este recorrido de **13 acciones** captura prácticamente todos los valores dinámicos de
+la aplicación. Cada paso indica: qué hace el usuario, qué requests genera, cuánto
+esperar (think time), qué validar (assertions) y qué valores nacen o se usan.
 
-> **Think time**: tiempo que un usuario real tarda en leer/decidir/tipear. Va **después**
-> de recibir la respuesta y **antes** de la siguiente acción. Sin think times, el script
-> no simula usuarios: simula una inundación.
+> **Think time**: tiempo que un usuario real tarda en leer, decidir o escribir. Va
+> **después** de recibir la respuesta y **antes** de la siguiente acción. Sin think
+> times, el script no simula usuarios: simula una inundación.
 
 ---
 
@@ -50,16 +50,16 @@ GET /favicon.svg         → 200
 **Assertions:**
 - Status `200`
 - El body contiene `RelampoTickets`
-- El body contiene `name="csrf_token"` ← si esto falla, no vas a poder terminar el flujo
+- El body contiene `name="csrf_token"` ← si esto falla, el flujo no se puede terminar
 
 **Valores que nacen:**
-- `relampo_session` (cookie — **única de toda la app**, en el header `Set-Cookie`)
+- `relampo_session` (cookie — **única de toda la aplicación**, en el header `Set-Cookie`)
 - `csrf_token` (input oculto en el HTML)
 - `Etag` (header de la respuesta de `app.js`)
 
-> ⚠️ **El request más importante del script.** Acá nace la cookie que necesitan TODOS
-> los requests siguientes, y el `csrf_token` que recién se usa en el paso 10.
-> Si tu herramienta maneja cookies automáticamente, dejalo activado.
+> ⚠️ **El request más importante del script.** Aquí nace la cookie que necesitan TODOS
+> los requests siguientes, y el `csrf_token` que recién se usa en el paso 12.
+> Conviene dejar activado el manejo automático de cookies de la herramienta.
 
 ---
 
@@ -73,12 +73,12 @@ POST /api/auth           → 200 (JSON)
 ```
 Body: `{"username":"user001","password":"Pass001!"}`
 
-**Think time:** 10–15 s (tipear usuario y contraseña)
+**Think time:** 10–15 s (escribir usuario y contraseña)
 
 **Assertions:**
 - Status `200`
 - El JSON contiene el campo `bearer`
-- `$.user.username` es igual al usuario que enviaste
+- `$.user.username` es igual al usuario enviado
 
 **Valores que nacen:** `bearer` (JWT, en `$.bearer`)
 
@@ -86,7 +86,7 @@ Body: `{"username":"user001","password":"Pass001!"}`
 
 ### Paso 3 — Ver "Mis eventos"
 
-**Acción:** tras el login, la app lo lleva a su panel de eventos
+**Acción:** tras el login, la aplicación lo lleva a su panel de eventos
 
 **Requests:**
 ```
@@ -94,12 +94,12 @@ GET /manage              → 200 (HTML)
 GET /api/manage/events   → 200 (JSON)   [Authorization: Bearer ...]
 ```
 
-**Think time:** 4–6 s (mira sus eventos)
+**Think time:** 4–6 s (revisa sus eventos)
 
 **Assertions:**
 - Status `200` en ambos
 - El HTML contiene `name="publish_token"`
-- El JSON tiene `$.count >= 1` (todo usuario arranca con el evento *Relampo Fest*)
+- El JSON tiene `$.count >= 1` (todo usuario comienza con el evento *Relampo Fest*)
 
 **Valores que nacen:** `publish_token` (input oculto — **un solo uso**)
 
@@ -109,7 +109,7 @@ GET /api/manage/events   → 200 (JSON)   [Authorization: Bearer ...]
 
 ### Paso 4 — Crear un evento
 
-**Acción:** llena nombre, lugar y fecha, hace clic en "Publicar evento"
+**Acción:** completa nombre, lugar y fecha, hace clic en "Publicar evento"
 
 **Requests:**
 ```
@@ -117,20 +117,21 @@ POST /api/manage/events  → 201 (JSON)   [Authorization: Bearer ...]
 ```
 Body: `{"name":"...","venue":"...","date":"...","publishToken":"{{publish_token}}"}`
 
-**Think time:** 15–25 s (llenar tres campos)
+**Think time:** 15–25 s (completar tres campos)
 
 **Assertions:**
 - Status `201`
 - El JSON contiene `$.event.id`
-- `$.event.name` es igual al nombre que enviaste
+- `$.event.name` es igual al nombre enviado
 
 **Valores que nacen:** `event_id` (`$.event.id`), `event_rev` (`$.event.rev`)
 
 **Valores que usa:** `publish_token`, `bearer`
 
-> 💡 **Parametrizá el nombre del evento** (ej. `Evento-${VU}-${iteración}`) en vez de
-> mandar siempre el mismo texto. Y recordá: máximo **5 eventos por usuario**; el sexto
-> devuelve `409 events_limit`.
+> 💡 **Conviene parametrizar el nombre del evento** (por ejemplo
+> `Evento-${VU}-${iteración}`) en lugar de enviar siempre el mismo texto. Y tener
+> presente el límite: máximo **5 eventos por usuario**; el sexto devuelve
+> `409 events_limit`.
 
 ---
 
@@ -156,7 +157,7 @@ GET /manage/events/{{event_id}}/edit   → 200 (HTML)
 
 ### Paso 6 — Guardar cambios
 
-**Acción:** cambia el nombre o el lugar, hace clic en "Guardar cambios"
+**Acción:** modifica el nombre o el lugar, hace clic en "Guardar cambios"
 
 **Requests:**
 ```
@@ -168,13 +169,14 @@ PUT /api/manage/events/{{event_id}}   → 200 (JSON)
 
 **Assertions:**
 - Status `200`
-- `$.event.rev` **es distinta** de la que enviaste (cada update genera una versión nueva)
+- `$.event.rev` **es distinta** de la enviada (cada update genera una versión nueva)
 
 **Valores que usa:** `event_id`, `event_rev` (header `If-Match`), `bearer`
-**Valores que nacen:** `event_rev_nueva` (`$.event.rev`) — necesaria para el paso 12
+**Valores que nacen:** `event_rev_nueva` (`$.event.rev`) — necesaria para el paso 13
 
 > ⚠️ **Bloqueo optimista.** Sin el header `If-Match` → `428`. Con una versión vieja →
-> `412`. Cada modificación devuelve una `rev` nueva: siempre correlacioná la última.
+> `412`. Cada modificación devuelve una `rev` nueva: hay que correlacionar siempre la
+> última.
 
 ---
 
@@ -200,7 +202,7 @@ GET /events              → 200 (HTML)
 
 ### Paso 8 — Ver el catálogo y los asientos
 
-**Acción:** la página carga eventos y elige un asiento
+**Acción:** la página carga los eventos y se elige un asiento
 
 **Requests:**
 ```
@@ -217,19 +219,19 @@ GET /api/events/{{event_id}}/seats            → 200 (JSON)  [Bearer]
 - Existe el header `X-Correlation-Id` en la respuesta de seats
 
 **Valores que nacen:**
-- `event_id` alternativo (`$.events[*].id` — **elegí una ocurrencia aleatoria**)
-- `seat_id` (`$.seats[*].id` — **aleatoria también**)
+- `event_id` alternativo (`$.events[*].id` — conviene una **ocurrencia aleatoria**)
+- `seat_id` (`$.seats[*].id` — **aleatoria** también)
 - `X-Correlation-Id` (**header de respuesta**, un solo uso)
 
-> 💡 **No uses índices fijos** (`$.seats[3].id`) si podés evitarlo. En esta app funciona
-> porque cada sesión tiene su propio stock, pero contra un sitio real es la causa #1 de
-> scripts que fallan en la segunda iteración.
+> 💡 **Evitar los índices fijos** (`$.seats[3].id`) siempre que sea posible. En esta
+> aplicación funcionan porque cada sesión tiene su propio stock, pero contra un sitio
+> real son la causa número uno de scripts que fallan en la segunda iteración.
 
 ---
 
 ### Paso 9 — Reservar el asiento
 
-**Acción:** la app reserva automáticamente al cargar la página
+**Acción:** la aplicación reserva automáticamente al cargar la página
 
 **Requests:**
 ```
@@ -238,7 +240,7 @@ POST /api/reservations   → 201 (JSON)
 ```
 Body: `{"eventId":"{{event_id}}","seatId":"{{seat_id}}"}`
 
-**Think time:** 3–5 s (ve el resumen antes de pagar) — **⏱️ máximo 60 s**, el token expira
+**Think time:** 3–5 s (revisa el resumen antes de pagar) — **⏱️ máximo 60 s**, el token expira
 
 **Assertions:**
 - Status `201`
@@ -270,12 +272,12 @@ Body (form): `reservation_id={{reservation_id}}&relampo_token={{relampo_token_b}
 **Valores que usa:** `reservation_id`, **`relampo_token_b`** ← ver sección 4
 **Valores que nacen:** `state` (del header `Location`, **URL-encoded**)
 
-> ⚠️ **Este request NO se puede correlacionar solo con extractores.** El token que
-> recibiste en el paso 9 **no es** el que hay que enviar: el navegador lo transforma con
+> ⚠️ **Este request NO se puede correlacionar solo con extractores.** El token recibido
+> en el paso 9 **no es** el que hay que enviar: el navegador lo transforma con
 > JavaScript. Ver la **sección 4** para el método y el código en cada herramienta.
 >
-> ⚠️ **Desactivá "seguir redirects" en este request**, o tu herramienta se comerá el 302
-> y no vas a poder leer el `state` del `Location`.
+> ⚠️ **Desactivar "seguir redirects" en este request**, o la herramienta consume el 302
+> y el `state` del `Location` queda inaccesible.
 
 ---
 
@@ -344,7 +346,7 @@ GET /logout                              → 302
 
 **Assertions:** status `302` con `Location: /`
 
-> 💡 **Terminá siempre con `/logout`.** Libera el cupo de sesión de tu nodo al instante
+> 💡 **Terminar siempre con `/logout`.** Libera el cupo de sesión del nodo al instante
 > y evita que la siguiente iteración choque con el límite de 5.
 
 ---
@@ -374,11 +376,11 @@ GET /logout                              → 302
 
 ### Valores de un solo uso o con vencimiento
 
-| Valor | Regla | Consecuencia si no la respetás |
+| Valor | Regla | Consecuencia para el script |
 |---|---|---|
 | `publish_token` | 1 solo uso | Hay que volver a `GET /manage` antes de cada creación |
 | `X-Correlation-Id` | 1 solo uso | Hay que pedir seats antes de cada reserva |
-| `relampo_token` | 1 uso + **60 s** | Reserva nueva en cada iteración, y pagar rápido |
+| `relampo_token` | 1 uso + **60 s** | Reserva nueva en cada iteración, y pago rápido |
 | `state` / flujo de pago | 5 minutos | Completar el pago dentro de ese margen |
 | `event_rev` | cambia en cada update | Re-correlacionar después de cada PUT |
 | `bearer` | 2 horas | Suficiente para cualquier prueba |
@@ -415,7 +417,8 @@ GET /logout                              → 302
 
 **Desde el `Location` de un redirect (302):**
 
-⚠️ Primero desactivá el seguimiento automático de redirects, si no, no vas a ver el 302.
+⚠️ Primero hay que desactivar el seguimiento automático de redirects; de lo contrario el
+302 no queda visible.
 
 | Herramienta | Cómo |
 |---|---|
@@ -439,7 +442,7 @@ Request de POST /pay/start:
 ```
 
 **A ≠ B.** El valor B **no aparece en ninguna respuesta**: lo calcula el JavaScript del
-navegador antes de enviar el formulario. Si correlacionás A y lo reenviás tal cual, el
+navegador antes de enviar el formulario. Si se correlaciona A y se reenvía tal cual, el
 servidor responde `403 you sent the RAW relampo_token (value A)`.
 
 Ningún correlador automático puede resolver esto: hay que **escribir código**.
@@ -469,7 +472,7 @@ Ejemplo de las primeras dos vueltas:
 **Relampo** — bloque `spark` en el request `POST /pay/start`:
 
 ```javascript
-// PASO 1 — Leer el token que extrajimos en el request anterior
+// PASO 1 — Leer el token extraído en el request anterior
 var tokenA = vars.get("relampo_token_a");
 
 // PASO 2 — Transformarlo (misma lógica que app.js en el navegador)
@@ -485,7 +488,7 @@ for (var i = 0; i < tokenA.length; i++) {
 vars.set("relampo_token_b", tokenB);
 ```
 
-**JMeter** — *JSR223 PreProcessor* (lenguaje Groovy) colgado del sampler de pago:
+**JMeter** — *JSR223 PreProcessor* (lenguaje Groovy) sobre el sampler de pago:
 
 ```groovy
 def tokenA = vars.get("relampo_token_a")
@@ -535,16 +538,16 @@ def signRelampoToken(tokenA: String): String = {
 .exec(session => session.set("tokenB", signRelampoToken(session("tokenA").as[String])))
 ```
 
-### Cómo verificar que lo hiciste bien
+### Cómo verificar que quedó bien
 
-1. El valor B debe medir **exactamente el doble** que A (128 vs 64 caracteres).
+1. El valor B debe medir **exactamente el doble** que A (128 contra 64 caracteres).
 2. El `POST /pay/start` debe responder **302** con `Location: /pay/authorize?state=...`
-3. Corré **dos iteraciones seguidas**: si la segunda también pasa, la transformación está
-   bien (el token es de un solo uso, así que un valor grabado fallaría).
+3. Ejecutar **dos iteraciones seguidas**: si la segunda también pasa, la transformación
+   está bien (el token es de un solo uso, así que un valor grabado fallaría).
 
 ### Modo avanzado (opcional)
 
-Si la app corre con `RELAMPO_TOKEN_MODE=hmac`, la transformación pasa a ser
+Si la aplicación corre con `RELAMPO_TOKEN_MODE=hmac`, la transformación pasa a ser
 `B = hex(HMAC-SHA256(A, salt))`. En k6: `crypto.hmac('sha256', salt, tokenA, 'hex')`.
 En JMeter: `javax.crypto.Mac` con `HmacSHA256`.
 
@@ -555,76 +558,77 @@ En JMeter: `javax.crypto.Mac` con `HmacSHA256`.
 Un script sin assertions **miente**: reporta éxito aunque el servidor esté devolviendo
 errores. Reglas prácticas:
 
-| Tipo de request | Qué validar siempre | Qué validar además |
+| Tipo de request | Validar siempre | Validar además |
 |---|---|---|
-| Página HTML | Status `200` | Un texto que solo aparece si la página cargó bien (ej. `Mis eventos`) y el input oculto que vas a extraer |
-| API JSON | Status esperado (`200`/`201`) | Que exista el campo que vas a correlacionar |
-| Redirect (302) | Status `302` | Que el `Location` contenga el parámetro que vas a extraer |
+| Página HTML | Status `200` | Un texto que solo aparece si la página cargó bien (por ejemplo `Mis eventos`) y el input oculto que se va a extraer |
+| API JSON | Status esperado (`200`/`201`) | Que exista el campo que se va a correlacionar |
+| Redirect (302) | Status `302` | Que el `Location` contenga el parámetro que se va a extraer |
 | Confirmación final | Status `200` | `"status":"CONFIRMED"` en el ticket |
 
 **Assertion negativa recomendada** en todos los requests: que el body **NO** contenga
 `correlationError`. Si aparece, algún valor se correlacionó mal y el script está
 "pasando" sobre un flujo roto.
 
-**Errores que devuelve la app y qué significan:**
+**Errores que devuelve la aplicación y qué significan:**
 
-| Status | `variable` | Qué te está diciendo |
+| Status | `variable` | Qué indica |
 |---|---|---|
 | 401 | `relampo_session` | Falta la cookie o expiró la sesión |
 | 401 | `bearer` | Token ausente, mal copiado o de otra sesión |
 | 400 | `catalog_id` | El `catalogId` no es el de esta sesión |
-| 403 | `x_correlation_id` | No reenviaste el header de la respuesta de seats |
-| 403 | `relampo_token` | Mandaste el crudo, o mal transformado, o ya usado, o expirado |
-| 403 | `state` / `code` | Extrajiste mal el `Location` (¿te comiste el 302?) |
-| 403 | `csrf_token` | Perdiste el valor del paso 1 |
-| 428 / 412 | `if_match` | Falta la `rev`, o mandaste una vieja |
+| 403 | `x_correlation_id` | No se reenvió el header de la respuesta de seats |
+| 403 | `relampo_token` | Se envió el crudo, o mal transformado, o ya usado, o expirado |
+| 403 | `state` / `code` | Extracción incorrecta del `Location` (¿se consumió el 302?) |
+| 403 | `csrf_token` | Se perdió el valor del paso 1 |
+| 428 / 412 | `if_match` | Falta la `rev`, o se envió una vieja |
 | 409 | `events_limit` | El usuario ya tiene 5 eventos |
-| 429 | `vus_per_node` | Más de 5 sesiones concurrentes desde tu IP |
+| 429 | `vus_per_node` | Más de 5 sesiones concurrentes desde la misma IP |
 
-Todos los errores traen `received` y `expected` para que compares. Con el header
+Todos los errores traen `received` y `expected` para comparar. Con el header
 `X-Practice-Hints: true` agregan un campo `hint` con el lugar exacto de extracción.
 
 ---
 
 ## 6. Think times y perfil de carga
 
-**Think times sugeridos** (usá una variación de ±30 % para que no queden sincronizados):
+**Think times sugeridos** (conviene aplicar una variación de ±30 % para que no queden
+sincronizados):
 
 | Momento | Tiempo |
 |---|---|
 | Leer una página | 3–8 s |
-| Llenar un formulario corto (login) | 10–15 s |
-| Llenar un formulario largo (crear evento) | 15–25 s |
+| Completar un formulario corto (login) | 10–15 s |
+| Completar un formulario largo (crear evento) | 15–25 s |
 | Elegir de una lista | 5–8 s |
 | Entre requests automáticos (redirects, fetch de la misma página) | 0 s |
 | **Entre reservar y pagar** | **máximo 60 s** ⏱️ |
 
-**Perfil de carga para esta app:** con el límite de 5 sesiones por nodo, una prueba
-razonable es 5 VUs por nodo con rampa de 30 s y 10–15 minutos de duración. Si usás la
-ejecución distribuida de Relampo (4 nodos), llegás a 20 VUs.
+**Perfil de carga para esta aplicación:** con el límite de 5 sesiones por nodo, una
+prueba razonable es 5 VUs por nodo con rampa de 30 s y 10–15 minutos de duración. Con
+la ejecución distribuida de Relampo (4 nodos), se llega a 20 VUs.
 
 ---
 
 ## 7. Checklist antes de dar el script por terminado
 
-- [ ] Corre **dos iteraciones seguidas** sin errores (la prueba real de la correlación)
-- [ ] Ningún valor dinámico quedó escrito a mano (buscá `EV-`, `CAT-`, `TCK-`, `RES-`, `PUB-` en el script)
+- [ ] Ejecuta **dos iteraciones seguidas** sin errores (la prueba real de la correlación)
+- [ ] Ningún valor dinámico quedó escrito a mano (buscar `EV-`, `CAT-`, `TCK-`, `RES-`, `PUB-` en el script)
 - [ ] El `csrf_token` del paso 1 llega hasta el paso 12
 - [ ] El `relampo_token` se transforma con el preprocesador (no se envía crudo)
-- [ ] Los redirects del pago están con "seguir redirects" desactivado donde hace falta
+- [ ] Los redirects del pago tienen "seguir redirects" desactivado donde corresponde
 - [ ] Hay assertions en todos los pasos, incluida `"status":"CONFIRMED"` al final
 - [ ] Hay think times entre las acciones del usuario
 - [ ] Usuario y datos están parametrizados (CSV), no hardcodeados
 - [ ] El flujo termina en `/logout`
-- [ ] Sacaste el header `X-Practice-Hints` de la versión final
+- [ ] Se quitó el header `X-Practice-Hints` de la versión final
 
 ---
 
 ## 8. Ejercicios por nivel
 
-| Nivel | Objetivo | Valores que hay que resolver |
+| Nivel | Objetivo | Valores a resolver |
 |---|---|---|
-| **1 — Básico** | Login y navegar | `relampo_session`, `csrf_token`, `bearer` |
+| **1 — Básico** | Login y navegación | `relampo_session`, `csrf_token`, `bearer` |
 | **2 — Intermedio** | Crear y editar un evento | `publish_token` (1 uso), `event_id`, `event_rev` (`If-Match`, 428/412) |
 | **3 — Avanzado** | Comprar una entrada | `catalog_id` (JSON escapado), `X-Correlation-Id`, `state` y `code` (redirects), `view_state` |
 | **4 — Experto** | Pago completo | **`relampo_token`** con preprocesador + las reglas de un solo uso y 60 s |
