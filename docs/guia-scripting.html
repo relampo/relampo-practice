@@ -184,6 +184,9 @@
     color: var(--ink-faint); font-weight: 600; background: var(--surface-2); white-space: nowrap;
   }
   tr:last-child td { border-bottom: 0; }
+  .tw.wide table { min-width: 1180px; }
+  .tw.wide td:first-child, .tw.wide td:nth-child(2) { white-space: nowrap; }
+  .tw.wide td:nth-child(3) { white-space: nowrap; }
   td code { font-size: 12px; }
 
   /* ---------- flow steps ---------- */
@@ -252,7 +255,6 @@
 
   footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--rule); color: var(--ink-faint); font-size: 13px; }
 </style>
-
 <div class="shell">
   <aside class="side">
     <div class="brand">
@@ -267,10 +269,9 @@
         <li><a href="#valores"><span class="n">03</span> Valores dinámicos</a></li>
         <li><a href="#extractores"><span class="n">04</span> Extractores por herramienta</a></li>
         <li><a href="#token"><span class="n">05</span> El valor encriptado</a></li>
-        <li><a href="#assertions"><span class="n">06</span> Assertions</a></li>
+        <li><a href="#errores"><span class="n">06</span> Errores de la aplicación</a></li>
         <li><a href="#think"><span class="n">07</span> Think times y carga</a></li>
         <li><a href="#checklist"><span class="n">08</span> Checklist final</a></li>
-        <li><a href="#niveles"><span class="n">09</span> Ejercicios por nivel</a></li>
       </ol>
     </nav>
   </aside>
@@ -278,7 +279,7 @@
   <main>
     <div class="lede">
       <h1>Guía de scripting</h1>
-      <p class="sub">Cómo construir un script de performance sobre RelampoTickets: flujo paso a paso, think times, assertions y correlación de los 18 valores dinámicos.</p>
+      <p class="sub">Cómo construir un script de performance sobre RelampoTickets: flujo paso a paso, think times, assertions y correlación de los valores dinámicos.</p>
       <p class="sub">Los flujos y las grabaciones pueden cambiar; los principios de esta guía no.</p>
       <div class="tools">
         <span class="tool">RELAMPO</span>
@@ -311,7 +312,7 @@
     <section id="flujo">
       <h2 data-n="02">Recorrido</h2>
       <p class="h">El flujo base</p>
-      <p>Estas 13 acciones capturan prácticamente todos los valores dinámicos de la aplicación. Cada paso indica qué hace el usuario, qué requests genera, cuánto esperar y qué validar.</p>
+      <p>Estas 13 acciones capturan prácticamente todos los valores dinámicos de la aplicación. Cada paso indica qué hace el usuario, qué request principal genera, cuánto esperar y qué validar.</p>
       <div class="note">
         <span class="tag">Think time</span>
         <p>Es el tiempo que una persona real tarda en leer, decidir o escribir. Va <b>después</b> de recibir la respuesta y <b>antes</b> de la siguiente acción. Sin think times, el script no simula usuarios: simula una inundación.</p>
@@ -324,18 +325,11 @@
           <p class="act">El usuario entra a practice.relampo.com</p>
           <div class="reqs">
             <div class="req"><span class="verb get">GET</span>/<span class="st">200 · HTML</span></div>
-            <div class="req"><span class="verb get">GET</span>/static/app.js<span class="st">200 · solo con caché limpia</span></div>
-            <div class="req"><span class="verb get">GET</span>/favicon.svg<span class="st">200</span></div>
           </div>
           <dl class="facts">
             <dt>Think time</dt><dd>5–8 s — lee la página, ve el formulario</dd>
             <dt>Assertions</dt><dd><ul><li>Status <b>200</b></li><li>El body contiene <b>RelampoTickets</b></li><li>El body contiene <code>name="csrf_token"</code></li></ul></dd>
-            <dt>Nacen aquí</dt><dd><b>relampo_session</b> (cookie, header <code>Set-Cookie</code>) · <b>csrf_token</b> (input oculto) · <b>Etag</b></dd>
           </dl>
-          <div class="note">
-            <span class="tag">El request más importante</span>
-            <p>Aquí nace la única cookie de la aplicación —que necesitan todos los requests siguientes— y el <code>csrf_token</code>, que recién se usa en el paso 12. Conviene dejar activado el manejo automático de cookies de la herramienta.</p>
-          </div>
         </article>
 
         <article class="step">
@@ -346,9 +340,8 @@
           </div>
           <dl class="facts">
             <dt>Body</dt><dd><code>{"username":"user001","password":"Pass001!"}</code></dd>
-            <dt>Think time</dt><dd>10–15 s — tipear usuario y contraseña</dd>
+            <dt>Think time</dt><dd>10–15 s — escribir usuario y contraseña</dd>
             <dt>Assertions</dt><dd><ul><li>Status <b>200</b></li><li>Existe el campo <code>bearer</code></li><li><code>$.user.username</code> coincide con el usuario enviado</li></ul></dd>
-            <dt>Nacen aquí</dt><dd><b>bearer</b> — jsonpath <code>$.bearer</code></dd>
           </dl>
         </article>
 
@@ -361,9 +354,7 @@
           </div>
           <dl class="facts">
             <dt>Think time</dt><dd>4–6 s</dd>
-            <dt>Assertions</dt><dd><ul><li>Status <b>200</b> en ambos</li><li>El HTML contiene <code>name="publish_token"</code></li><li><code>$.count</code> ≥ 1 — todo usuario arranca con el evento <i>Relampo Fest</i></li></ul></dd>
-            <dt>Nacen aquí</dt><dd><b>publish_token</b> — input oculto, <b>un solo uso</b></dd>
-            <dt>Usa</dt><dd><b>bearer</b> en el header <code>Authorization</code></dd>
+            <dt>Assertions</dt><dd><ul><li>Status <b>200</b> en ambos</li><li>El HTML contiene <code>name="publish_token"</code></li><li><code>$.count</code> ≥ 1 — todo usuario comienza con el evento <i>Relampo Fest</i></li></ul></dd>
           </dl>
         </article>
 
@@ -375,15 +366,10 @@
           </div>
           <dl class="facts">
             <dt>Body</dt><dd><code>{"name":"…","venue":"…","date":"…","publishToken":"{{publish_token}}"}</code></dd>
-            <dt>Think time</dt><dd>15–25 s — llenar tres campos</dd>
+            <dt>Think time</dt><dd>15–25 s — completar tres campos</dd>
             <dt>Assertions</dt><dd><ul><li>Status <b>201</b></li><li>Existe <code>$.event.id</code></li><li><code>$.event.name</code> coincide con lo enviado</li></ul></dd>
-            <dt>Nacen aquí</dt><dd><b>event_id</b> <code>$.event.id</code> · <b>event_rev</b> <code>$.event.rev</code></dd>
-            <dt>Usa</dt><dd><b>publish_token</b>, <b>bearer</b></dd>
+            <dt>Límite</dt><dd>Máximo 5 eventos por usuario; el sexto devuelve <code>409 events_limit</code></dd>
           </dl>
-          <div class="note">
-            <span class="tag">Parametrizá</span>
-            <p>Conviene usar un nombre variable (<code>Evento-${VU}-${iteración}</code>) en lugar de texto fijo. Y tener presente el límite: <b>5 eventos por usuario</b>; el sexto devuelve <code>409 events_limit</code>.</p>
-          </div>
         </article>
 
         <article class="step">
@@ -395,7 +381,6 @@
           <dl class="facts">
             <dt>Think time</dt><dd>3–5 s</dd>
             <dt>Assertions</dt><dd><ul><li>Status <b>200</b></li><li>Existe el header <code>ETag</code></li><li>El HTML contiene el nombre del evento</li></ul></dd>
-            <dt>Nacen aquí</dt><dd><b>event_rev</b> — header <code>ETag</code>, viene entre comillas: hay que quitarlas</dd>
           </dl>
         </article>
 
@@ -409,7 +394,6 @@
             <dt>Headers</dt><dd><code>Authorization: Bearer …</code> · <code>If-Match: {{event_rev}}</code></dd>
             <dt>Think time</dt><dd>10–15 s</dd>
             <dt>Assertions</dt><dd><ul><li>Status <b>200</b></li><li><code>$.event.rev</code> es <b>distinta</b> de la enviada</li></ul></dd>
-            <dt>Nacen aquí</dt><dd><b>event_rev_nueva</b> — necesaria para el DELETE del paso 13</dd>
           </dl>
           <div class="note crit">
             <span class="tag">Bloqueo optimista</span>
@@ -426,7 +410,6 @@
           <dl class="facts">
             <dt>Think time</dt><dd>3–5 s</dd>
             <dt>Assertions</dt><dd>Status <b>200</b> · el HTML contiene <code>data-config</code></dd>
-            <dt>Nacen aquí</dt><dd><b>catalog_id</b> — dentro de un <b>JSON escapado</b> en el atributo <code>data-config</code>, con comillas como <code>&amp;#34;</code></dd>
           </dl>
         </article>
 
@@ -440,12 +423,7 @@
           <dl class="facts">
             <dt>Think time</dt><dd>5–8 s — elegir asiento</dd>
             <dt>Assertions</dt><dd><ul><li>Status <b>200</b> en ambos</li><li><code>$.events</code> tiene al menos 1 elemento</li><li><code>$.seats</code> tiene 12 elementos</li><li>Existe el header <code>X-Correlation-Id</code></li></ul></dd>
-            <dt>Nacen aquí</dt><dd><b>event_id</b> <code>$.events[*].id</code> · <b>seat_id</b> <code>$.seats[*].id</code> · <b>X-Correlation-Id</b> (header de respuesta, un solo uso)</dd>
           </dl>
-          <div class="note">
-            <span class="tag">Ocurrencia aleatoria</span>
-            <p>Conviene evitar los índices fijos como <code>$.seats[3].id</code>. Aquí funcionan porque cada sesión tiene su propio stock, pero contra un sitio real son la causa número uno de scripts que fallan en la segunda iteración.</p>
-          </div>
         </article>
 
         <article class="step">
@@ -459,7 +437,6 @@
             <dt>Body</dt><dd><code>{"eventId":"{{event_id}}","seatId":"{{seat_id}}"}</code></dd>
             <dt>Think time</dt><dd>3–5 s — <b>máximo 60 s</b>, el token expira</dd>
             <dt>Assertions</dt><dd><ul><li>Status <b>201</b></li><li>Existe <code>$.relampoToken</code></li><li><code>$.tokenExpiresInSeconds</code> es 60</li></ul></dd>
-            <dt>Nacen aquí</dt><dd><b>reservation_id</b> · <b>relampo_token_a</b> <code>$.relampoToken</code></dd>
           </dl>
         </article>
 
@@ -473,12 +450,11 @@
             <dt>Body</dt><dd><code>reservation_id={{reservation_id}}&amp;relampo_token={{relampo_token_b}}</code></dd>
             <dt>Think time</dt><dd>2–3 s</dd>
             <dt>Assertions</dt><dd>Status <b>302</b> · el header <code>Location</code> contiene <code>state=</code></dd>
-            <dt>Nacen aquí</dt><dd><b>state</b> — del header <code>Location</code>, viene <b>URL-encoded</b></dd>
           </dl>
           <div class="note crit">
             <span class="tag">Este paso no se resuelve con extractores</span>
             <p>El token recibido en el paso 9 <b>no es</b> el que hay que enviar: el navegador lo transforma con JavaScript. El método y el código para cada herramienta están en la <a href="#token">sección 05</a>.</p>
-            <p>Además: <b>desactivar el seguimiento automático de redirects</b> en este request, o la herramienta consume el 302 y el <code>state</code> queda inaccesible.</p>
+            <p>Además hay que <b>desactivar el seguimiento automático de redirects</b> en este request, o la herramienta consume el 302 y el <code>state</code> queda inaccesible.</p>
           </div>
         </article>
 
@@ -494,7 +470,6 @@
             <dt>Body</dt><dd><code>request={{request}}&amp;x_correlation_id={{x_correlation_id}}</code></dd>
             <dt>Think time</dt><dd>0 s entre los tres — los dispara la máquina. 5–8 s después del callback: el usuario revisa el resumen</dd>
             <dt>Assertions</dt><dd><ul><li>authorize → 200, contiene <code>name="request"</code></li><li>continue → 302, el <code>Location</code> contiene <code>code=</code></li><li>callback → 200, contiene <code>name="view_state"</code></li></ul></dd>
-            <dt>Nacen aquí</dt><dd><b>request</b> · <b>x_correlation_id</b> · <b>code</b> · <b>view_state</b> (base64 de ~1.4 KB) · <b>reservation_id</b> re-emitido</dd>
           </dl>
         </article>
 
@@ -509,8 +484,6 @@
             <dt>Body</dt><dd><code>view_state={{view_state}}&amp;code={{code}}&amp;reservation_id={{reservation_id}}&amp;csrf_token={{csrf_token}}</code></dd>
             <dt>Think time</dt><dd>3–5 s</dd>
             <dt>Assertions</dt><dd><ul><li>Status <b>200</b></li><li>El HTML contiene <code>data-ticket</code></li><li>El ticket devuelve <code>"status":"CONFIRMED"</code> — la assertion más importante del script</li></ul></dd>
-            <dt>Usa</dt><dd><b>view_state</b>, <b>code</b>, <b>reservation_id</b> y el <b>csrf_token</b> del paso 1</dd>
-            <dt>Nacen aquí</dt><dd><b>ticket_id</b> — atributo <code>data-ticket</code> del tag <code>&lt;body&gt;</code></dd>
           </dl>
         </article>
 
@@ -526,10 +499,6 @@
             <dt>Think time</dt><dd>2–3 s</dd>
             <dt>Assertions</dt><dd>Status <b>302</b> con <code>Location: /</code></dd>
           </dl>
-          <div class="note">
-            <span class="tag">Terminar siempre con logout</span>
-            <p>Libera el cupo de sesión del nodo al instante y evita que la siguiente iteración choque con el límite de 5.</p>
-          </div>
         </article>
 
       </div>
@@ -538,29 +507,157 @@
     <!-- ============ 03 ============ -->
     <section id="valores">
       <h2 data-n="03">Referencia</h2>
-      <p class="h">Tabla maestra de valores dinámicos</p>
-      <div class="tw">
+      <p class="h">Tabla de valores dinámicos</p>
+      <div class="tw wide">
         <table>
-          <thead><tr><th>Valor</th><th>Nace en</th><th>Ubicación en la respuesta</th><th>Se envía en</th><th>Ubicación en el request</th><th>Extractor sugerido</th></tr></thead>
+          <thead><tr>
+            <th>Nombre</th><th>Valor</th><th>Se captura en</th><th>Ubicación de la respuesta</th><th>Se envía de vuelta en</th><th>Tipo de extractor</th><th>Extractor sugerido</th>
+          </tr></thead>
           <tbody>
-            <tr><td><code>relampo_session</code></td><td>GET /</td><td>Header <code>Set-Cookie</code></td><td>Todos</td><td>Header <code>Cookie</code></td><td>Cookie manager automático</td></tr>
-            <tr><td><code>csrf_token</code></td><td>GET /</td><td>HTML, input oculto</td><td>POST /pay/confirm</td><td>Form body</td><td><code>(?is)name=["']csrf_token["'][^>]*value=["']([^"']+)["']</code></td></tr>
-            <tr><td><code>Etag</code></td><td>GET /static/app.js</td><td>Header <code>Etag</code></td><td>mismo request</td><td>Header <code>If-None-Match</code></td><td><code>(?im)^Etag:\s*([^\r\n]+)$</code> — opcional, no se valida</td></tr>
-            <tr><td><code>bearer</code></td><td>POST /api/auth</td><td>JSON</td><td>Toda la API</td><td>Header <code>Authorization</code></td><td>jsonpath <code>$.bearer</code></td></tr>
-            <tr><td><code>publish_token</code></td><td>GET /manage</td><td>HTML, input oculto</td><td>POST /api/manage/events</td><td>JSON, campo <code>publishToken</code></td><td><code>(?is)name=["']publish_token["'][^>]*value=["']([^"']+)["']</code></td></tr>
-            <tr><td><code>event_id</code></td><td>POST /api/manage/events</td><td>JSON</td><td>edit · PUT · DELETE · seats</td><td><b>Path</b> de la URL</td><td>jsonpath <code>$.event.id</code></td></tr>
-            <tr><td><code>event_rev</code></td><td>GET …/edit o el PUT</td><td>Header <code>ETag</code> o JSON</td><td>PUT y DELETE</td><td>Header <code>If-Match</code></td><td><code>(?im)^ETag:\s*"?([^"\r\n]+)"?$</code> o <code>$.event.rev</code></td></tr>
-            <tr><td><code>catalog_id</code></td><td>GET /events</td><td>HTML, JSON escapado en <code>data-config</code></td><td>GET /api/events</td><td><b>Query param</b></td><td><code>(?is)data-config="[^"]*?catalogId(?:&amp;#34;|&amp;quot;):(?:&amp;#34;|&amp;quot;)([A-Za-z0-9-]+)</code></td></tr>
-            <tr><td><code>seat_id</code></td><td>GET …/seats</td><td>JSON, array</td><td>POST /api/reservations</td><td>JSON body</td><td>jsonpath <code>$.seats[*].id</code> → aleatorio</td></tr>
-            <tr><td><code>X-Correlation-Id</code></td><td>GET …/seats</td><td><b>Header de respuesta</b></td><td>POST /api/reservations</td><td><b>Header de request</b></td><td><code>(?im)^X-Correlation-Id:\s*([^\r\n]+)$</code></td></tr>
-            <tr><td><code>reservation_id</code></td><td>POST /api/reservations</td><td>JSON</td><td>/pay/start y /pay/confirm</td><td>Form body</td><td>jsonpath <code>$.reservationId</code></td></tr>
-            <tr><td><b><code>relampo_token</code></b></td><td>POST /api/reservations</td><td>JSON <code>$.relampoToken</code></td><td>POST /pay/start</td><td>Form body <b>transformado</b></td><td>jsonpath + <a href="#token">preprocesador</a></td></tr>
-            <tr><td><code>state</code></td><td>POST /pay/start</td><td>Header <code>Location</code></td><td>authorize y callback</td><td>Query param</td><td><code>(?im)^Location:\s*[^\r\n]*?[?&amp;]state=([^&amp;#\r\n]+)</code> + url_decode</td></tr>
-            <tr><td><code>request</code></td><td>GET /pay/authorize</td><td>HTML, input oculto</td><td>POST /pay/continue</td><td>Form body</td><td><code>(?is)name=["']request["'][^>]*value=["']([^"']+)["']</code></td></tr>
-            <tr><td><code>x_correlation_id</code></td><td>GET /pay/authorize</td><td>HTML, input oculto</td><td>POST /pay/continue</td><td>Form body</td><td><code>(?is)name=["']x_correlation_id["'][^>]*value=["']([^"']+)["']</code></td></tr>
-            <tr><td><code>code</code></td><td>POST /pay/continue</td><td>Header <code>Location</code></td><td>callback y confirm</td><td>Query param + form body</td><td><code>(?im)^Location:\s*[^\r\n]*?[?&amp;]code=([^&amp;#\r\n]+)</code></td></tr>
-            <tr><td><code>view_state</code></td><td>GET /pay/callback</td><td>HTML, input oculto</td><td>POST /pay/confirm</td><td>Form body</td><td><code>(?is)name=["']view_state["'][^>]*value=["']([^"']+)["']</code></td></tr>
-            <tr><td><code>ticket_id</code></td><td>POST /pay/confirm</td><td>HTML, atributo del <code>&lt;body&gt;</code></td><td>GET /api/tickets/{id}</td><td><b>Path</b> de la URL</td><td><code>(?is)data-ticket=["']([^"']+)["']</code></td></tr>
+            <tr>
+              <td><code>relampo_session</code></td>
+              <td><code>7b37cfacc836a31d…</code></td>
+              <td>GET /</td><td>Header <code>Set-Cookie</code></td>
+              <td>Todos los requests · header <code>Cookie</code></td>
+              <td>Cookie manager</td>
+              <td>Automático</td>
+            </tr>
+            <tr>
+              <td><code>csrf_token</code></td>
+              <td><code>0f66a320060901667dab…</code></td>
+              <td>GET /</td><td>Body HTML, input oculto</td>
+              <td>POST /pay/confirm · form body</td>
+              <td>regex</td>
+              <td><code>(?is)name=["']csrf_token["'][^>]*value=["']([^"']+)["']</code></td>
+            </tr>
+            <tr>
+              <td><code>Etag</code></td>
+              <td><code>"735c697234df2c9f"</code></td>
+              <td>GET /static/app.js</td><td>Header <code>Etag</code></td>
+              <td>Mismo request · header <code>If-None-Match</code></td>
+              <td>regex sobre headers</td>
+              <td><code>(?im)^Etag:\s*([^\r\n]+)$</code></td>
+            </tr>
+            <tr>
+              <td><code>bearer</code></td>
+              <td><code>eyJhbGciOiJIUzI1NiIs…</code></td>
+              <td>POST /api/auth</td><td>Body JSON</td>
+              <td>Toda la API · header <code>Authorization</code></td>
+              <td>jsonpath</td>
+              <td><code>$.bearer</code></td>
+            </tr>
+            <tr>
+              <td><code>publish_token</code></td>
+              <td><code>PUB-6480098c33938000…</code></td>
+              <td>GET /manage</td><td>Body HTML, input oculto</td>
+              <td>POST /api/manage/events · campo <code>publishToken</code> del JSON</td>
+              <td>regex</td>
+              <td><code>(?is)name=["']publish_token["'][^>]*value=["']([^"']+)["']</code></td>
+            </tr>
+            <tr>
+              <td><code>event_id</code></td>
+              <td><code>EV-09929966-2806-4898…</code></td>
+              <td>POST /api/manage/events</td><td>Body JSON</td>
+              <td>edit · PUT · DELETE · seats · <b>path</b> de la URL</td>
+              <td>jsonpath</td>
+              <td><code>$.event.id</code></td>
+            </tr>
+            <tr>
+              <td><code>event_rev</code></td>
+              <td><code>1-d3fd5c00075746c5</code></td>
+              <td>GET …/edit o el PUT</td><td>Header <code>ETag</code> o body JSON</td>
+              <td>PUT y DELETE · header <code>If-Match</code></td>
+              <td>regex sobre headers · jsonpath</td>
+              <td><code>(?im)^ETag:\s*"?([^"\r\n]+)"?$</code> · <code>$.event.rev</code></td>
+            </tr>
+            <tr>
+              <td><code>catalog_id</code></td>
+              <td><code>CAT-44ef1118c40a</code></td>
+              <td>GET /events</td><td>Body HTML, JSON escapado en el atributo <code>data-config</code></td>
+              <td>GET /api/events · <b>query param</b> <code>catalogId</code></td>
+              <td>regex</td>
+              <td><code>(?is)data-config="[^"]*?catalogId(?:&amp;#34;|&amp;quot;):(?:&amp;#34;|&amp;quot;)([A-Za-z0-9-]+)</code></td>
+            </tr>
+            <tr>
+              <td><code>seat_id</code></td>
+              <td><code>S-C3-315883</code></td>
+              <td>GET …/seats</td><td>Body JSON, array de 12</td>
+              <td>POST /api/reservations · body JSON</td>
+              <td>jsonpath, ocurrencia aleatoria</td>
+              <td><code>$.seats[*].id</code></td>
+            </tr>
+            <tr>
+              <td><code>X-Correlation-Id</code></td>
+              <td><code>cfc9769c-ae22-4969-9cb7…</code></td>
+              <td>GET …/seats</td><td>Header de respuesta</td>
+              <td>POST /api/reservations · <b>header</b> de request</td>
+              <td>regex sobre headers</td>
+              <td><code>(?im)^X-Correlation-Id:\s*([^\r\n]+)$</code></td>
+            </tr>
+            <tr>
+              <td><code>reservation_id</code></td>
+              <td><code>RES-d908e32724a9</code></td>
+              <td>POST /api/reservations</td><td>Body JSON</td>
+              <td>/pay/start y /pay/confirm · form body</td>
+              <td>jsonpath</td>
+              <td><code>$.reservationId</code></td>
+            </tr>
+            <tr>
+              <td><b><code>relampo_token</code></b></td>
+              <td><code>8a23a2b1…</code> → <code>4a045e52…</code></td>
+              <td>POST /api/reservations</td><td>Body JSON</td>
+              <td>POST /pay/start · form body, <b>transformado</b></td>
+              <td>jsonpath + <a href="#token">preprocesador</a></td>
+              <td><code>$.relampoToken</code> y luego XOR con la sal</td>
+            </tr>
+            <tr>
+              <td><code>state</code></td>
+              <td><code>Xjv42dJuWHnm9Rz0Ehfkai…</code></td>
+              <td>POST /pay/start</td><td>Header <code>Location</code> del 302</td>
+              <td>authorize y callback · query param</td>
+              <td>regex sobre headers + url_decode</td>
+              <td><code>(?im)^Location:\s*[^\r\n]*?[?&amp;]state=([^&amp;#\r\n]+)</code></td>
+            </tr>
+            <tr>
+              <td><code>request</code></td>
+              <td><code>zCz3b7z59IBchOq2DjUCav…</code></td>
+              <td>GET /pay/authorize</td><td>Body HTML, input oculto</td>
+              <td>POST /pay/continue · form body</td>
+              <td>regex</td>
+              <td><code>(?is)name=["']request["'][^>]*value=["']([^"']+)["']</code></td>
+            </tr>
+            <tr>
+              <td><code>x_correlation_id</code></td>
+              <td><code>a5c999c1-591a-45ca-8cd5…</code></td>
+              <td>GET /pay/authorize</td><td>Body HTML, input oculto</td>
+              <td>POST /pay/continue · form body</td>
+              <td>regex</td>
+              <td><code>(?is)name=["']x_correlation_id["'][^>]*value=["']([^"']+)["']</code></td>
+            </tr>
+            <tr>
+              <td><code>code</code></td>
+              <td><code>debb45abd0a956d94d8b…</code></td>
+              <td>POST /pay/continue</td><td>Header <code>Location</code> del 302</td>
+              <td>callback · query param — confirm · form body</td>
+              <td>regex sobre headers</td>
+              <td><code>(?im)^Location:\s*[^\r\n]*?[?&amp;]code=([^&amp;#\r\n]+)</code></td>
+            </tr>
+            <tr>
+              <td><code>view_state</code></td>
+              <td><code>LcyOk5nIhyOquHux1fsO3R…</code></td>
+              <td>GET /pay/callback</td><td>Body HTML, input oculto (~1.4 KB)</td>
+              <td>POST /pay/confirm · form body</td>
+              <td>regex</td>
+              <td><code>(?is)name=["']view_state["'][^>]*value=["']([^"']+)["']</code></td>
+            </tr>
+            <tr>
+              <td><code>ticket_id</code></td>
+              <td><code>TCK-38dd517074a589c9</code></td>
+              <td>POST /pay/confirm</td><td>Body HTML, atributo del tag <code>&lt;body&gt;</code></td>
+              <td>GET /api/tickets/{id} · <b>path</b> de la URL</td>
+              <td>regex</td>
+              <td><code>(?is)data-ticket=["']([^"']+)["']</code></td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -568,11 +665,11 @@
       <h3>Valores de un solo uso o con vencimiento</h3>
       <div class="tw">
         <table>
-          <thead><tr><th>Valor</th><th>Regla</th><th>Qué implica para el script</th></tr></thead>
+          <thead><tr><th>Valor</th><th>Regla</th><th>Consecuencia para el script</th></tr></thead>
           <tbody>
-            <tr><td><code>publish_token</code></td><td>1 solo uso</td><td>Volver a <code>GET /manage</code> antes de cada creación</td></tr>
-            <tr><td><code>X-Correlation-Id</code></td><td>1 solo uso</td><td>Pedir seats antes de cada reserva</td></tr>
-            <tr><td><code>relampo_token</code></td><td>1 uso + <b>60 s</b></td><td>Reserva nueva en cada iteración, y pagar rápido</td></tr>
+            <tr><td><code>publish_token</code></td><td>1 solo uso</td><td>Hay que volver a <code>GET /manage</code> antes de cada creación</td></tr>
+            <tr><td><code>X-Correlation-Id</code></td><td>1 solo uso</td><td>Hay que pedir seats antes de cada reserva</td></tr>
+            <tr><td><code>relampo_token</code></td><td>1 uso + <b>60 s</b></td><td>Reserva nueva en cada iteración, y pago rápido</td></tr>
             <tr><td><code>state</code> / flujo de pago</td><td>5 minutos</td><td>Completar el pago dentro de ese margen</td></tr>
             <tr><td><code>event_rev</code></td><td>cambia en cada update</td><td>Re-correlacionar después de cada PUT</td></tr>
             <tr><td><code>bearer</code></td><td>2 horas</td><td>Suficiente para cualquier prueba</td></tr>
@@ -651,7 +748,7 @@ Request de POST /pay/start
       <p>Ningún correlador automático puede resolver esto. Hay que escribir código.</p>
 
       <h3>El método</h3>
-      <p>Por cada carácter de A: se toma su código numérico, se mezcla con <b>XOR</b> contra el código del carácter que le toca de la sal, y el resultado se escribe en hexadecimal de dos dígitos.</p>
+      <p>Por cada carácter de A: se toma su código numérico, se mezcla con <b>XOR</b> contra el código del carácter que le corresponde de la sal, y el resultado se escribe en hexadecimal de dos dígitos.</p>
       <p>La sal es <code>relampo-public-salt-v1</code> — pública, está en <code>/static/app.js</code>. Cuando se termina (22 caracteres) vuelve a empezar. Como cada carácter produce 2 dígitos, <b>B siempre mide el doble que A</b>.</p>
       <div class="tw" style="max-width:520px">
         <table>
@@ -665,7 +762,7 @@ Request de POST /pay/start
       <p>→ B empieza con <code>4b52…</code></p>
 
       <h3>Relampo — bloque <code>spark</code> en <code>POST /pay/start</code></h3>
-      <pre><code>// PASO 1 — Leer el token que extrajimos en el request anterior
+      <pre><code>// PASO 1 — Leer el token extraído en el request anterior
 var tokenA = vars.get("relampo_token_a");
 
 // PASO 2 — Transformarlo (misma lógica que app.js en el navegador)
@@ -719,44 +816,21 @@ const tokenB = signRelampoToken(tokenA);</code></pre>
 
 .exec(session =&gt; session.set("tokenB", signRelampoToken(session("tokenA").as[String])))</code></pre>
 
-      <h3>Cómo verificar que lo hiciste bien</h3>
+      <h3>Cómo verificar que quedó bien</h3>
       <ol>
         <li>El valor B mide <b>exactamente el doble</b> que A: 128 contra 64 caracteres.</li>
         <li>El <code>POST /pay/start</code> responde <b>302</b> con <code>Location: /pay/authorize?state=…</code></li>
         <li>Ejecutar <b>dos iteraciones seguidas</b>: si la segunda también pasa, la transformación está bien. El token es de un solo uso, así que un valor grabado fallaría.</li>
       </ol>
-
-      <div class="note">
-        <span class="tag">Modo avanzado</span>
-        <p>Si la app corre con <code>RELAMPO_TOKEN_MODE=hmac</code>, la transformación pasa a ser <code>B = hex(HMAC-SHA256(A, salt))</code>. En k6: <code>crypto.hmac('sha256', salt, tokenA, 'hex')</code>. En JMeter: <code>javax.crypto.Mac</code> con <code>HmacSHA256</code>.</p>
-      </div>
     </section>
 
     <!-- ============ 06 ============ -->
-    <section id="assertions">
-      <h2 data-n="06">Validación</h2>
-      <p class="h">Assertions</p>
-      <p>Un script sin assertions <b>miente</b>: reporta éxito aunque el servidor esté devolviendo errores.</p>
+    <section id="errores">
+      <h2 data-n="06">Diagnóstico</h2>
+      <p class="h">Errores de la aplicación</p>
       <div class="tw">
         <table>
-          <thead><tr><th>Tipo de request</th><th>Validá siempre</th><th>Validá además</th></tr></thead>
-          <tbody>
-            <tr><td>Página HTML</td><td>Status 200</td><td>Un texto que solo aparece si la página cargó bien, y el input oculto que se va a extraer</td></tr>
-            <tr><td>API JSON</td><td>Status 200 / 201</td><td>Que exista el campo que se va a correlacionar</td></tr>
-            <tr><td>Redirect</td><td>Status 302</td><td>Que el <code>Location</code> contenga el parámetro que se va a extraer</td></tr>
-            <tr><td>Confirmación final</td><td>Status 200</td><td><code>"status":"CONFIRMED"</code> en el ticket</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="note">
-        <span class="tag">Assertion negativa recomendada</span>
-        <p>En todos los requests: que el body <b>no</b> contenga <code>correlationError</code>. Si aparece, algún valor se correlacionó mal y el script está “pasando” sobre un flujo roto.</p>
-      </div>
-
-      <h3>Errores que devuelve la app</h3>
-      <div class="tw">
-        <table>
-          <thead><tr><th>Status</th><th>variable</th><th>Qué te está diciendo</th></tr></thead>
+          <thead><tr><th>Status</th><th>variable</th><th>Qué indica</th></tr></thead>
           <tbody>
             <tr><td>401</td><td><code>relampo_session</code></td><td>Falta la cookie o expiró la sesión</td></tr>
             <tr><td>401</td><td><code>bearer</code></td><td>Token ausente, mal copiado o de otra sesión</td></tr>
@@ -767,7 +841,7 @@ const tokenB = signRelampoToken(tokenA);</code></pre>
             <tr><td>403</td><td><code>csrf_token</code></td><td>Se perdió el valor del paso 1</td></tr>
             <tr><td>428 / 412</td><td><code>if_match</code></td><td>Falta la rev, o se envió una vieja</td></tr>
             <tr><td>409</td><td><code>events_limit</code></td><td>El usuario ya tiene 5 eventos</td></tr>
-            <tr><td>429</td><td><code>vus_per_node</code></td><td>Más de 5 sesiones concurrentes desde tu IP</td></tr>
+            <tr><td>429</td><td><code>vus_per_node</code></td><td>Más de 5 sesiones concurrentes desde la misma IP</td></tr>
           </tbody>
         </table>
       </div>
@@ -784,8 +858,8 @@ const tokenB = signRelampoToken(tokenA);</code></pre>
           <thead><tr><th>Momento</th><th>Tiempo</th></tr></thead>
           <tbody>
             <tr><td>Leer una página</td><td>3–8 s</td></tr>
-            <tr><td>Llenar un formulario corto (login)</td><td>10–15 s</td></tr>
-            <tr><td>Llenar un formulario largo (crear evento)</td><td>15–25 s</td></tr>
+            <tr><td>Completar un formulario corto (login)</td><td>10–15 s</td></tr>
+            <tr><td>Completar un formulario largo (crear evento)</td><td>15–25 s</td></tr>
             <tr><td>Elegir de una lista</td><td>5–8 s</td></tr>
             <tr><td>Entre requests automáticos (redirects, fetch de la misma página)</td><td>0 s</td></tr>
             <tr><td><b>Entre reservar y pagar</b></td><td><b>máximo 60 s</b></td></tr>
@@ -800,30 +874,17 @@ const tokenB = signRelampoToken(tokenA);</code></pre>
       <h2 data-n="08">Cierre</h2>
       <p class="h">Checklist antes de dar el script por terminado</p>
       <ul class="chk">
-        <li>Corre <b>dos iteraciones seguidas</b> sin errores — la prueba real de la correlación</li>
+        <li>Ejecuta <b>dos iteraciones seguidas</b> sin errores — la prueba real de la correlación</li>
         <li>Ningún valor dinámico quedó escrito a mano: buscar <code>EV-</code>, <code>CAT-</code>, <code>TCK-</code>, <code>RES-</code>, <code>PUB-</code> en el script</li>
         <li>El <code>csrf_token</code> del paso 1 llega hasta el paso 12</li>
         <li>El <code>relampo_token</code> se transforma con el preprocesador, no se envía crudo</li>
-        <li>Los redirects del pago están con “seguir redirects” desactivado donde hace falta</li>
+        <li>Los redirects del pago tienen “seguir redirects” desactivado donde corresponde</li>
         <li>Hay assertions en todos los pasos, incluida <code>"status":"CONFIRMED"</code> al final</li>
         <li>Hay think times entre las acciones del usuario</li>
         <li>Usuario y datos están parametrizados por CSV, no hardcodeados</li>
         <li>El flujo termina en <code>/logout</code></li>
         <li>Se quitó el header <code>X-Practice-Hints</code> de la versión final</li>
       </ul>
-    </section>
-
-    <!-- ============ 09 ============ -->
-    <section id="niveles">
-      <h2 data-n="09">Práctica</h2>
-      <p class="h">Ejercicios por nivel</p>
-      <div class="grid2">
-        <div class="card"><h4>1 · Básico — login y navegar</h4><p>Resolver <code>relampo_session</code>, <code>csrf_token</code> y <code>bearer</code>.</p></div>
-        <div class="card"><h4>2 · Intermedio — crear y editar</h4><p><code>publish_token</code> de un solo uso, <code>event_id</code> y <code>event_rev</code> con <code>If-Match</code> (428 y 412).</p></div>
-        <div class="card"><h4>3 · Avanzado — comprar</h4><p><code>catalog_id</code> en JSON escapado, <code>X-Correlation-Id</code>, <code>state</code> y <code>code</code> de los redirects, <code>view_state</code>.</p></div>
-        <div class="card"><h4>4 · Experto — pago completo</h4><p><code>relampo_token</code> con preprocesador, más las reglas de un solo uso y los 60 segundos.</p></div>
-        <div class="card"><h4>5 · Maestro — prueba real</h4><p>Todo lo anterior con datos parametrizados, ocurrencias aleatorias, think times variables y assertions completas.</p></div>
-      </div>
     </section>
 
     <footer>
