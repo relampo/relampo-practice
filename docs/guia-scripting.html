@@ -473,7 +473,16 @@
           </dl>
           <div class="note crit">
             <span class="tag">Valores base64 HTML-escapados</span>
-            <p><code>request</code> y <code>view_state</code> son base64, y en el HTML el carácter <code>+</code> aparece como <code>&amp;#43;</code>. Hay que des-escaparlos antes de enviarlos o el servidor responde 403 (en JMeter: <code>${__unescapeHtml(${variable})}</code>). Es intermitente: solo falla cuando el valor contiene un <code>+</code>.</p>
+            <p><code>request</code> y <code>view_state</code> son base64, y de todo el alfabeto base64 el único carácter que el servidor escapa es el <code>+</code>, que en el HTML aparece como <code>&amp;#43;</code> (<code>/</code> y <code>=</code> pasan tal cual). Hay que revertirlo antes de enviarlos o el servidor responde 403. Es <b>intermitente</b>: solo falla cuando el valor sorteado contiene un <code>+</code>, así que puede pasar en una corrida y fallar en la siguiente.</p>
+            <div class="tw" style="margin:12px 0 0"><table>
+              <thead><tr><th>Herramienta</th><th>Cómo revertirlo</th></tr></thead>
+              <tbody>
+                <tr><td>Relampo</td><td>En un <code>spark</code>: <code>vars.set("request_ok", vars.get("request").replace(/&amp;#43;/g, "+"))</code></td></tr>
+                <tr><td>JMeter</td><td><code>${__unescapeHtml(${gateway_request})}</code> en el valor del parámetro</td></tr>
+                <tr><td>k6</td><td><code>const req = m[1].replace(/&amp;#43;/g, "+");</code></td></tr>
+                <tr><td>Gatling</td><td><code>.check(regex("...").transform(_.replace("&amp;#43;", "+")).saveAs("request"))</code></td></tr>
+              </tbody>
+            </table></div>
           </div>
         </article>
 

@@ -234,10 +234,18 @@ callback (the user reviews the summary before confirming)
 - `/pay/continue` → 302, the `Location` contains `code=`
 - `/pay/callback` → 200, the HTML contains `name="view_state"`
 
-> ⚠️ **`request` and `view_state` come HTML-escaped.** They are base64, and in the HTML
-> the `+` character shows up as `&#43;`. They must be unescaped before being sent or the
-> server answers 403. In JMeter: `${__unescapeHtml(${variable})}`. It is intermittent:
-> it only fails when the value happens to contain a `+`.
+> ⚠️ **`request` and `view_state` come HTML-escaped.** They are base64, and out of the
+> whole base64 alphabet the only character the server escapes is `+`, which shows up in
+> the HTML as `&#43;` (`/` and `=` pass through). It must be reverted before sending or
+> the server answers 403. It is **intermittent**: it only fails when the drawn value
+> happens to contain a `+`, so it can pass on one run and fail on the next.
+
+| Tool | How to revert it |
+|---|---|
+| Relampo | In a `spark`: `vars.set("request_ok", vars.get("request").replace(/&#43;/g, "+"))` |
+| JMeter | `${__unescapeHtml(${gateway_request})}` in the parameter value |
+| k6 | `const req = m[1].replace(/&#43;/g, "+");` |
+| Gatling | `.check(regex("...").transform(_.replace("&#43;", "+")).saveAs("request"))` |
 
 ---
 
