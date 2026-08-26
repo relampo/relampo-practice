@@ -50,8 +50,14 @@ jmeter -n -t RelampoTickets.jmx -Jthreads=1 -Jloops=1 -l resultados.jtl
 - CSV Data Set Config leyendo `users.csv`
 - Thread Group parametrizado
 
-**19 samplers** correspondientes a los 13 pasos de la guía, cada uno con sus
+**21 samplers** correspondientes a los pasos de la guía, cada uno con sus
 extractores.
+
+**Lógica condicional**
+- Simple Controllers agrupando cada tramo de la sesión
+- Dos If Controllers después del login, sobre la columna `edad` del CSV:
+  `edad >= 18` abre el flujo con compra, `edad < 18` deja solo mirar el catálogo
+- Loop Controller con `${tickets}` para los que compran más de una entrada
 
 **Extractores (17)**
 
@@ -72,7 +78,7 @@ reserva devuelve `relampoToken`, el pago responde `302`, y el ticket final está
 **5 Uniform Random Timers** con los think times de la guía. Para depurar sin
 esperar: `-Jjmeter.timer.factor=0.05` reduce todos los tiempos al 5 %.
 
-## Dos detalles que importan
+## Tres detalles que importan
 
 **1. Los valores base64 vienen HTML-escapados.** El `request` de la pasarela y el
 `view_state` son base64, y en el HTML el carácter `+` aparece como `&#43;`. Si se
@@ -84,6 +90,12 @@ azar el valor contiene un `+`.
 JMeter lo sigue, ese `GET /` abre una sesión nueva que queda huérfana y consume un
 cupo del límite de 5 por IP. El sampler tiene *Follow Redirects* desactivado a
 propósito.
+
+**3. El Loop Controller anidado va con *Forever* marcado.** Un Loop Controller
+dentro de un If Controller se da por terminado después de la primera pasada y no
+se reinicia en las iteraciones siguientes del Thread Group: la compra sucedería
+solo en la primera iteración. Con *Forever* marcado se reinicia bien, y quien
+corta el ciclo es la cuenta de `${tickets}`.
 
 ## Verificación
 

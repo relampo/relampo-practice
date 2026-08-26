@@ -354,7 +354,7 @@ Parametros: -Jhost -Jprotocol -Jport -Jthreads -Jrampup -Jloops&#xd;Ejemplo loca
         </HTTPSamplerProxy>
         <hashTree/>
 <LoopController guiclass="LoopControlPanel" testclass="LoopController" testname="Comprar ${tickets} ticket(s)" enabled="true">
-  <boolProp name="LoopController.continue_forever">false</boolProp>
+  <boolProp name="LoopController.continue_forever">true</boolProp>
   <stringProp name="LoopController.loops">${tickets}</stringProp>
 </LoopController>
 <hashTree>
