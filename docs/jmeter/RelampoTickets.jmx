@@ -70,7 +70,7 @@ Parametros: -Jhost -Jprotocol -Jport -Jthreads -Jrampup -Jloops&#xd;Ejemplo loca
         <boolProp name="recycle">true</boolProp>
         <stringProp name="shareMode">shareMode.all</stringProp>
         <boolProp name="stopThread">false</boolProp>
-        <stringProp name="variableNames">username,password,edad,tickets</stringProp>
+        <stringProp name="variableNames">username,password,edad</stringProp>
       </CSVDataSet>
       <hashTree/>
 
@@ -353,9 +353,9 @@ Parametros: -Jhost -Jprotocol -Jport -Jthreads -Jrampup -Jloops&#xd;Ejemplo loca
           <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
         </HTTPSamplerProxy>
         <hashTree/>
-<LoopController guiclass="LoopControlPanel" testclass="LoopController" testname="Comprar ${tickets} ticket(s)" enabled="true">
+<LoopController guiclass="LoopControlPanel" testclass="LoopController" testname="Comprar 3 tickets" enabled="true">
   <boolProp name="LoopController.continue_forever">true</boolProp>
-  <stringProp name="LoopController.loops">${tickets}</stringProp>
+  <stringProp name="LoopController.loops">3</stringProp>
 </LoopController>
 <hashTree>
 <UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think time 5-8 s (elegir asiento)" enabled="true">
