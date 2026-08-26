@@ -70,7 +70,7 @@ Parametros: -Jhost -Jprotocol -Jport -Jthreads -Jrampup -Jloops&#xd;Ejemplo loca
         <boolProp name="recycle">true</boolProp>
         <stringProp name="shareMode">shareMode.all</stringProp>
         <boolProp name="stopThread">false</boolProp>
-        <stringProp name="variableNames">username,password,age,tickets</stringProp>
+        <stringProp name="variableNames">username,password</stringProp>
       </CSVDataSet>
       <hashTree/>
 
@@ -209,62 +209,14 @@ Parametros: -Jhost -Jprotocol -Jport -Jthreads -Jrampup -Jloops&#xd;Ejemplo loca
         </HTTPSamplerProxy>
         <hashTree/>
 
-        
-
-        <!-- PASO 4: POST /api/manage/events -->
-        
-
-        <!-- PASO 5: GET .../edit (ETag) -->
-        
-
-        
-
-        <!-- PASO 6: PUT con If-Match -->
-        
-
-        <!-- PASO 7: GET /events (catalog_id) -->
-        
-
-        <!-- PASO 8: catálogo y asientos -->
-        
-
-        
-
-        
-
-        <!-- PASO 9: reservar -->
-        
-
-        <!-- PASO 10: pagar (con transformación) -->
-        
-
-        <!-- PASO 11: pasarela -->
-        
-
-        
-
-        
-
-        
-
-        <!-- PASO 12: confirmar -->
-        
-
-        
-
-                <!-- RAMA MAYOR DE EDAD: crea evento y compra tickets -->
-        <IfController guiclass="IfControllerPanel" testclass="IfController" testname="SI es mayor de edad (age &gt;= 18)" enabled="true">
-          <stringProp name="IfController.condition">${__jexl3(${age} &gt;= 18)}</stringProp>
-          <boolProp name="IfController.evaluateAll">false</boolProp>
-          <boolProp name="IfController.useExpression">true</boolProp>
-        </IfController>
-        <hashTree>
-<UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think time 15-25 s (completar formulario)" enabled="true">
+        <UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think time 15-25 s (completar formulario)" enabled="true">
           <stringProp name="ConstantDelayOffset">15000</stringProp>
           <stringProp name="RandomDelayMaximum">10000</stringProp>
         </UniformRandomTimer>
         <hashTree/>
-<HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="05 POST /api/manage/events (crear evento)" enabled="true">
+
+        <!-- PASO 4: POST /api/manage/events -->
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="05 POST /api/manage/events (crear evento)" enabled="true">
           <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
           <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
             <collectionProp name="Arguments.arguments">
@@ -299,7 +251,9 @@ Parametros: -Jhost -Jprotocol -Jport -Jthreads -Jrampup -Jloops&#xd;Ejemplo loca
           </JSONPostProcessor>
           <hashTree/>
         </hashTree>
-<HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="06 GET /manage/events/{id}/edit" enabled="true">
+
+        <!-- PASO 5: GET .../edit (ETag) -->
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="06 GET /manage/events/{id}/edit" enabled="true">
           <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
             <collectionProp name="Arguments.arguments"/>
           </elementProp>
@@ -320,12 +274,15 @@ Parametros: -Jhost -Jprotocol -Jport -Jthreads -Jrampup -Jloops&#xd;Ejemplo loca
           </RegexExtractor>
           <hashTree/>
         </hashTree>
-<UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think time 10-15 s (editar)" enabled="true">
+
+        <UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think time 10-15 s (editar)" enabled="true">
           <stringProp name="ConstantDelayOffset">10000</stringProp>
           <stringProp name="RandomDelayMaximum">5000</stringProp>
         </UniformRandomTimer>
         <hashTree/>
-<HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="07 PUT /api/manage/events/{id} (guardar)" enabled="true">
+
+        <!-- PASO 6: PUT con If-Match -->
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="07 PUT /api/manage/events/{id} (guardar)" enabled="true">
           <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
           <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
             <collectionProp name="Arguments.arguments">
@@ -364,7 +321,9 @@ Parametros: -Jhost -Jprotocol -Jport -Jthreads -Jrampup -Jloops&#xd;Ejemplo loca
           </JSONPostProcessor>
           <hashTree/>
         </hashTree>
-<HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="08 GET /events" enabled="true">
+
+        <!-- PASO 7: GET /events (catalog_id) -->
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="08 GET /events" enabled="true">
           <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
             <collectionProp name="Arguments.arguments"/>
           </elementProp>
@@ -385,7 +344,9 @@ Parametros: -Jhost -Jprotocol -Jport -Jthreads -Jrampup -Jloops&#xd;Ejemplo loca
           </RegexExtractor>
           <hashTree/>
         </hashTree>
-<HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="09 GET /api/events?catalogId=" enabled="true">
+
+        <!-- PASO 8: catálogo y asientos -->
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="09 GET /api/events?catalogId=" enabled="true">
           <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
             <collectionProp name="Arguments.arguments"/>
           </elementProp>
@@ -396,18 +357,14 @@ Parametros: -Jhost -Jprotocol -Jport -Jthreads -Jrampup -Jloops&#xd;Ejemplo loca
           <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
         </HTTPSamplerProxy>
         <hashTree/>
-          <!-- compra tantos tickets como diga la columna del CSV -->
-          <LoopController guiclass="LoopControlPanel" testclass="LoopController" testname="Comprar ${tickets} ticket(s)" enabled="true">
-            <boolProp name="LoopController.continue_forever">false</boolProp>
-            <stringProp name="LoopController.loops">${tickets}</stringProp>
-          </LoopController>
-          <hashTree>
-<UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think time 5-8 s (elegir asiento)" enabled="true">
+
+        <UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think time 5-8 s (elegir asiento)" enabled="true">
           <stringProp name="ConstantDelayOffset">5000</stringProp>
           <stringProp name="RandomDelayMaximum">3000</stringProp>
         </UniformRandomTimer>
         <hashTree/>
-<HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="10 GET /api/events/{id}/seats" enabled="true">
+
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="10 GET /api/events/{id}/seats" enabled="true">
           <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
             <collectionProp name="Arguments.arguments"/>
           </elementProp>
@@ -435,7 +392,9 @@ Parametros: -Jhost -Jprotocol -Jport -Jthreads -Jrampup -Jloops&#xd;Ejemplo loca
           </JSONPostProcessor>
           <hashTree/>
         </hashTree>
-<HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="11 POST /api/reservations (reservar)" enabled="true">
+
+        <!-- PASO 9: reservar -->
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="11 POST /api/reservations (reservar)" enabled="true">
           <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
           <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
             <collectionProp name="Arguments.arguments">
@@ -490,7 +449,9 @@ Parametros: -Jhost -Jprotocol -Jport -Jthreads -Jrampup -Jloops&#xd;Ejemplo loca
           </ResponseAssertion>
           <hashTree/>
         </hashTree>
-<HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="12 POST /pay/start (pagar)" enabled="true">
+
+        <!-- PASO 10: pagar (con transformación) -->
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="12 POST /pay/start (pagar)" enabled="true">
           <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
             <collectionProp name="Arguments.arguments">
               <elementProp name="reservation_id" elementType="HTTPArgument">
@@ -556,7 +517,9 @@ vars.put("relampo_token_b", tokenB.toString())</stringProp>
           </ResponseAssertion>
           <hashTree/>
         </hashTree>
-<HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="13 GET /pay/authorize" enabled="true">
+
+        <!-- PASO 11: pasarela -->
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="13 GET /pay/authorize" enabled="true">
           <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
             <collectionProp name="Arguments.arguments"/>
           </elementProp>
@@ -586,7 +549,8 @@ vars.put("relampo_token_b", tokenB.toString())</stringProp>
           </RegexExtractor>
           <hashTree/>
         </hashTree>
-<HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="14 POST /pay/continue" enabled="true">
+
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="14 POST /pay/continue" enabled="true">
           <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
             <collectionProp name="Arguments.arguments">
               <elementProp name="request" elementType="HTTPArgument">
@@ -622,7 +586,8 @@ vars.put("relampo_token_b", tokenB.toString())</stringProp>
           </RegexExtractor>
           <hashTree/>
         </hashTree>
-<HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="15 GET /pay/callback" enabled="true">
+
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="15 GET /pay/callback" enabled="true">
           <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
             <collectionProp name="Arguments.arguments"/>
           </elementProp>
@@ -643,12 +608,15 @@ vars.put("relampo_token_b", tokenB.toString())</stringProp>
           </RegexExtractor>
           <hashTree/>
         </hashTree>
-<UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think time 3-5 s (revisar resumen)" enabled="true">
+
+        <UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think time 3-5 s (revisar resumen)" enabled="true">
           <stringProp name="ConstantDelayOffset">3000</stringProp>
           <stringProp name="RandomDelayMaximum">2000</stringProp>
         </UniformRandomTimer>
         <hashTree/>
-<HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="16 POST /pay/confirm (confirmar)" enabled="true">
+
+        <!-- PASO 12: confirmar -->
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="16 POST /pay/confirm (confirmar)" enabled="true">
           <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
             <collectionProp name="Arguments.arguments">
               <elementProp name="view_state" elementType="HTTPArgument">
@@ -698,7 +666,8 @@ vars.put("relampo_token_b", tokenB.toString())</stringProp>
           </RegexExtractor>
           <hashTree/>
         </hashTree>
-<HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="17 GET /api/tickets/{id}" enabled="true">
+
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="17 GET /api/tickets/{id}" enabled="true">
           <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
             <collectionProp name="Arguments.arguments"/>
           </elementProp>
@@ -719,8 +688,9 @@ vars.put("relampo_token_b", tokenB.toString())</stringProp>
           </ResponseAssertion>
           <hashTree/>
         </hashTree>
-          </hashTree>
-<HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="18 DELETE /api/manage/events/{id}" enabled="true">
+
+        <!-- PASO 13: limpiar y salir -->
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="18 DELETE /api/manage/events/{id}" enabled="true">
           <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
             <collectionProp name="Arguments.arguments"/>
           </elementProp>
@@ -741,51 +711,6 @@ vars.put("relampo_token_b", tokenB.toString())</stringProp>
           </HeaderManager>
           <hashTree/>
         </hashTree>
-        </hashTree>
-
-        <!-- RAMA MENOR DE EDAD: solo mira los eventos, no compra -->
-        <IfController guiclass="IfControllerPanel" testclass="IfController" testname="SI es menor de edad (age &lt; 18)" enabled="true">
-          <stringProp name="IfController.condition">${__jexl3(${age} &lt; 18)}</stringProp>
-          <boolProp name="IfController.evaluateAll">false</boolProp>
-          <boolProp name="IfController.useExpression">true</boolProp>
-        </IfController>
-        <hashTree>
-<HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="08b GET /events (menor)" enabled="true">
-          <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
-            <collectionProp name="Arguments.arguments"/>
-          </elementProp>
-          <stringProp name="HTTPSampler.path">/events</stringProp>
-          <stringProp name="HTTPSampler.method">GET</stringProp>
-          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
-          <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
-          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
-        </HTTPSamplerProxy>
-        <hashTree>
-          <RegexExtractor guiclass="RegexExtractorGui" testclass="RegexExtractor" testname="catalog_id (JSON escapado en data-config)" enabled="true">
-            <stringProp name="RegexExtractor.useHeaders">false</stringProp>
-            <stringProp name="RegexExtractor.refname">catalog_id</stringProp>
-            <stringProp name="RegexExtractor.regex">catalogId(?:&amp;#34;|&amp;quot;):(?:&amp;#34;|&amp;quot;)([A-Za-z0-9-]+)</stringProp>
-            <stringProp name="RegexExtractor.template">$1$</stringProp>
-            <stringProp name="RegexExtractor.default">CATALOG_ID_NO_ENCONTRADO</stringProp>
-            <stringProp name="RegexExtractor.match_number">1</stringProp>
-          </RegexExtractor>
-          <hashTree/>
-        </hashTree>
-<HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="09b GET /api/events (menor)" enabled="true">
-          <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
-            <collectionProp name="Arguments.arguments"/>
-          </elementProp>
-          <stringProp name="HTTPSampler.path">/api/events?catalogId=${catalog_id}</stringProp>
-          <stringProp name="HTTPSampler.method">GET</stringProp>
-          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
-          <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
-          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
-        </HTTPSamplerProxy>
-        <hashTree/>
-        </hashTree>
-
-        <!-- PASO 13: limpiar y salir -->
-        
 
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="19 GET /logout" enabled="true">
           <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
