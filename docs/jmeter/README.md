@@ -56,8 +56,9 @@ extractores.
 **Lógica condicional**
 - Simple Controllers agrupando cada tramo de la sesión
 - Dos If Controllers después del login, sobre la columna `edad` del CSV:
-  `edad >= 18` abre el flujo con compra, `edad < 18` deja solo mirar el catálogo
-- Loop Controller con `${tickets}` para los que compran más de una entrada
+  `edad >= 18` abre el flujo de compra, `edad < 18` no hace nada
+- Loop Controller en 3 dentro de la rama de mayores: cada uno compra tres entradas
+- El logout está fuera de los dos If, así que lo hacen todos
 
 **Extractores (17)**
 
@@ -99,5 +100,7 @@ corta el ciclo es la cuenta de `${tickets}`.
 
 ## Verificación
 
-Ejecutado contra la aplicación real con 5 usuarios virtuales × 2 iteraciones:
-190 muestras, **0 errores**, 10 tickets `CONFIRMED` y 0 sesiones colgadas al final.
+Ejecutado con 10 iteraciones, una por usuario: 290 muestras, **0 errores**.
+Los ocho mayores hicieron 3 reservas cada uno y 35 muestras; los dos menores
+(`user005`, `user010`) hicieron 0 reservas y 5 muestras — login, ver sus eventos
+y logout. Los diez cerraron sesión.

@@ -706,41 +706,8 @@ vars.put("relampo_token_b", tokenB.toString())</stringProp>
   <boolProp name="IfController.useExpression">true</boolProp>
 </IfController>
 <hashTree>
-<GenericController guiclass="LogicControllerGui" testclass="GenericController" testname="03B - Flujo sin compra (menor de edad)" enabled="true"/>
-<hashTree>
-<HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="08b GET /events (solo mirar)" enabled="true">
-          <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
-            <collectionProp name="Arguments.arguments"/>
-          </elementProp>
-          <stringProp name="HTTPSampler.path">/events</stringProp>
-          <stringProp name="HTTPSampler.method">GET</stringProp>
-          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
-          <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
-          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
-        </HTTPSamplerProxy>
-        <hashTree>
-          <RegexExtractor guiclass="RegexExtractorGui" testclass="RegexExtractor" testname="catalog_id (JSON escapado en data-config)" enabled="true">
-            <stringProp name="RegexExtractor.useHeaders">false</stringProp>
-            <stringProp name="RegexExtractor.refname">catalog_id</stringProp>
-            <stringProp name="RegexExtractor.regex">catalogId(?:&amp;#34;|&amp;quot;):(?:&amp;#34;|&amp;quot;)([A-Za-z0-9-]+)</stringProp>
-            <stringProp name="RegexExtractor.template">$1$</stringProp>
-            <stringProp name="RegexExtractor.default">CATALOG_ID_NO_ENCONTRADO</stringProp>
-            <stringProp name="RegexExtractor.match_number">1</stringProp>
-          </RegexExtractor>
-          <hashTree/>
-        </hashTree>
-<HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="09b GET /api/events (solo mirar)" enabled="true">
-          <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
-            <collectionProp name="Arguments.arguments"/>
-          </elementProp>
-          <stringProp name="HTTPSampler.path">/api/events?catalogId=${catalog_id}</stringProp>
-          <stringProp name="HTTPSampler.method">GET</stringProp>
-          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
-          <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
-          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
-        </HTTPSamplerProxy>
-        <hashTree/>
-</hashTree>
+<GenericController guiclass="LogicControllerGui" testclass="GenericController" testname="03B - Menor de edad (va directo al logout)" enabled="true"/>
+<hashTree/>
 </hashTree>
 
 <GenericController guiclass="LogicControllerGui" testclass="GenericController" testname="04 - Cierre" enabled="true"/>
