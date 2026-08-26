@@ -172,6 +172,19 @@ Parametros: -Jhost -Jprotocol -Jport -Jthreads -Jrampup -Jloops&#xd;Ejemplo loca
         </hashTree>
 </hashTree>
 
+<IfController guiclass="IfControllerPanel" testclass="IfController" testname="SI es mayor de edad (edad &gt;= 18)" enabled="true">
+  <stringProp name="IfController.condition">${__jexl3(${edad} &gt;= 18)}</stringProp>
+  <boolProp name="IfController.evaluateAll">false</boolProp>
+  <boolProp name="IfController.useExpression">true</boolProp>
+</IfController>
+<hashTree>
+<GenericController guiclass="LogicControllerGui" testclass="GenericController" testname="03A - Flujo con compra (mayor de edad)" enabled="true"/>
+<hashTree>
+<LoopController guiclass="LoopControlPanel" testclass="LoopController" testname="Repetir el flujo 3 veces" enabled="true">
+  <boolProp name="LoopController.continue_forever">true</boolProp>
+  <stringProp name="LoopController.loops">3</stringProp>
+</LoopController>
+<hashTree>
 <GenericController guiclass="LogicControllerGui" testclass="GenericController" testname="02 - Mis eventos" enabled="true"/>
 <hashTree>
 <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="03 GET /manage" enabled="true">
@@ -208,14 +221,6 @@ Parametros: -Jhost -Jprotocol -Jport -Jthreads -Jrampup -Jloops&#xd;Ejemplo loca
         <hashTree/>
 </hashTree>
 
-<IfController guiclass="IfControllerPanel" testclass="IfController" testname="SI es mayor de edad (edad &gt;= 18)" enabled="true">
-  <stringProp name="IfController.condition">${__jexl3(${edad} &gt;= 18)}</stringProp>
-  <boolProp name="IfController.evaluateAll">false</boolProp>
-  <boolProp name="IfController.useExpression">true</boolProp>
-</IfController>
-<hashTree>
-<GenericController guiclass="LogicControllerGui" testclass="GenericController" testname="03A - Flujo con compra (mayor de edad)" enabled="true"/>
-<hashTree>
 <UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think time 15-25 s (completar formulario)" enabled="true">
           <stringProp name="ConstantDelayOffset">15000</stringProp>
           <stringProp name="RandomDelayMaximum">10000</stringProp>
@@ -353,11 +358,6 @@ Parametros: -Jhost -Jprotocol -Jport -Jthreads -Jrampup -Jloops&#xd;Ejemplo loca
           <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
         </HTTPSamplerProxy>
         <hashTree/>
-<LoopController guiclass="LoopControlPanel" testclass="LoopController" testname="Comprar 3 tickets" enabled="true">
-  <boolProp name="LoopController.continue_forever">true</boolProp>
-  <stringProp name="LoopController.loops">3</stringProp>
-</LoopController>
-<hashTree>
 <UniformRandomTimer guiclass="UniformRandomTimerGui" testclass="UniformRandomTimer" testname="Think time 5-8 s (elegir asiento)" enabled="true">
           <stringProp name="ConstantDelayOffset">5000</stringProp>
           <stringProp name="RandomDelayMaximum">3000</stringProp>
@@ -675,7 +675,6 @@ vars.put("relampo_token_b", tokenB.toString())</stringProp>
           </ResponseAssertion>
           <hashTree/>
         </hashTree>
-</hashTree>
 <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="18 DELETE /api/manage/events/{id}" enabled="true">
           <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
             <collectionProp name="Arguments.arguments"/>
@@ -697,6 +696,7 @@ vars.put("relampo_token_b", tokenB.toString())</stringProp>
           </HeaderManager>
           <hashTree/>
         </hashTree>
+</hashTree>
 </hashTree>
 </hashTree>
 

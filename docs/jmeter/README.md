@@ -56,9 +56,13 @@ extractores.
 **Lógica condicional**
 - Simple Controllers agrupando cada tramo de la sesión
 - Dos If Controllers después del login, sobre la columna `edad` del CSV:
-  `edad >= 18` abre el flujo de compra, `edad < 18` no hace nada
-- Loop Controller en 3 dentro de la rama de mayores: cada uno compra tres entradas
+  `edad >= 18` abre el flujo completo, `edad < 18` no hace nada
+- Loop Controller en 3 dentro de la rama de mayores, envolviendo todo el flujo:
+  ver sus eventos, crear, editar, comprar, pagar y borrar — tres veces
 - El logout está fuera de los dos If, así que lo hacen todos
+
+Un mayor de edad hace 51 muestras por iteración (3 × 17); un menor hace 3:
+home, login y logout.
 
 **Extractores (17)**
 
@@ -92,7 +96,12 @@ JMeter lo sigue, ese `GET /` abre una sesión nueva que queda huérfana y consum
 cupo del límite de 5 por IP. El sampler tiene *Follow Redirects* desactivado a
 propósito.
 
-**3. El Loop Controller anidado va con *Forever* marcado.** Un Loop Controller
+**3. Cada vuelta del loop arranca con `GET /manage`.** El `publish_token` que
+pide la creación del evento es de un solo uso y nace ahí. Si el paso queda
+fuera del loop, la segunda vuelta crea el evento con un token ya gastado y el
+servidor responde `403`. Por eso el grupo *Mis eventos* está adentro.
+
+**4. El Loop Controller anidado va con *Forever* marcado.** Un Loop Controller
 dentro de un If Controller se da por terminado después de la primera pasada y no
 se reinicia en las iteraciones siguientes del Thread Group: la compra sucedería
 solo en la primera iteración. Con *Forever* marcado se reinicia bien, y quien
@@ -100,7 +109,7 @@ corta el ciclo es la cuenta de `${tickets}`.
 
 ## Verificación
 
-Ejecutado con 10 iteraciones, una por usuario: 290 muestras, **0 errores**.
-Los ocho mayores hicieron 3 reservas cada uno y 35 muestras; los dos menores
-(`user005`, `user010`) hicieron 0 reservas y 5 muestras — login, ver sus eventos
-y logout. Los diez cerraron sesión.
+Ejecutado con 10 iteraciones, una por usuario: 414 muestras, **0 errores**.
+Los ocho mayores dieron 3 vueltas al flujo — 3 eventos creados, 3 reservas y 3
+borrados cada uno, 51 muestras; los dos menores (`user005`, `user010`) hicieron
+3 muestras. Los diez cerraron sesión.
