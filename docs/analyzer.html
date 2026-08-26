@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RelampoTickets Performance Analyzer</title>
+  <link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+  <header>
+    <a class="logo" href="./"><span class="bolt">&#9889;</span>Relampo<span class="tag">Tickets</span></a>
+    <nav>
+      <a href="https://practice.relampo.com">App real</a>
+      <a href="scripting.html">Guia de scripting</a>
+      <a href="analyzer.html">Performance Analyzer</a>
+    </nav>
+  </header>
+  <main>
+    <span class="badge">Analyzer</span>
+    <h1>Performance Analyzer, <span class="hl">correlacion temporal</span></h1>
+    <p class="sub">Carga resultados de prueba y metricas de servidor para comparar RPS, errores, percentiles, CPU y memoria sobre la misma linea de tiempo.</p>
+
+    <div class="cols">
+      <section class="panel">
+        <h2>Archivos de prueba</h2>
+        <label for="loadFile">JMeter .jtl, Relampo CSV/JSON, k6 JSONL o Gatling CSV</label>
+        <input id="loadFile" type="file" accept=".jtl,.csv,.json,.jsonl,.log">
+        <label for="cpuFile">CPU Lightsail JSON</label>
+        <input id="cpuFile" type="file" accept=".json">
+        <label for="memoryFile">Memoria Lightsail JSON</label>
+        <input id="memoryFile" type="file" accept=".json">
+        <button id="analyzeBtn" type="button">Analizar</button>
+        <div id="status" class="status">Esperando archivos.</div>
+      </section>
+
+      <section class="panel">
+        <h2>Resumen</h2>
+        <dl class="kpis">
+          <div class="kpi"><dt>Requests</dt><dd id="kSamples">-</dd></div>
+          <div class="kpi"><dt>RPS prom.</dt><dd id="kRps">-</dd></div>
+          <div class="kpi"><dt>P95</dt><dd id="kP95">-</dd></div>
+          <div class="kpi"><dt>Errores</dt><dd id="kErrors">-</dd></div>
+          <div class="kpi"><dt>VUs pico</dt><dd id="kVus">-</dd></div>
+          <div class="kpi"><dt>CPU pico</dt><dd id="kCpu">-</dd></div>
+          <div class="kpi"><dt>Mem pico</dt><dd id="kMemory">-</dd></div>
+          <div class="kpi"><dt>Duracion</dt><dd id="kDuration">-</dd></div>
+        </dl>
+        <p id="summaryText" class="note">Los hallazgos aparecen cuando cargues datos.</p>
+      </section>
+    </div>
+
+    <section class="panel">
+      <h2>Grafico combinado</h2>
+      <div class="rangebar">
+        <span class="note">Cada punto resume datos reales del log dentro de esa ventana. Arrastra sobre el grafico para filtrar tiempo.</span>
+        <label class="inline-control">Granularidad
+          <select id="bucketSize">
+            <option value="2000" selected>2s</option>
+            <option value="10000">10s</option>
+            <option value="60000">1 min</option>
+            <option value="120000">2 min</option>
+            <option value="300000">5 min</option>
+          </select>
+        </label>
+        <button type="button" class="mini secondary" data-download="timeline">Descargar PNG</button>
+        <button id="resetZoom" type="button" class="mini secondary">Reset</button>
+      </div>
+      <div class="toggles">
+        <label class="toggle"><input type="checkbox" data-series="rps" checked> RPS</label>
+        <label class="toggle"><input type="checkbox" data-series="avg" checked> Avg</label>
+        <label class="toggle"><input type="checkbox" data-series="p95" checked> P95</label>
+        <label class="toggle"><input type="checkbox" data-series="vus" checked> VUs</label>
+        <label class="toggle"><input type="checkbox" data-series="errors" checked> Errores</label>
+        <label class="toggle"><input type="checkbox" data-series="cpu" checked> CPU</label>
+        <label class="toggle"><input type="checkbox" data-series="memory" checked> Memoria</label>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="timeline" width="1200" height="420"></canvas>
+        <div id="tooltip" class="tooltip" hidden></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Charts separados</h2>
+      <div class="mini-charts">
+        <div class="mini-chart"><div class="chart-head"><h3>RPS</h3><button type="button" class="icon-btn" data-download="chartRps">PNG</button></div><canvas id="chartRps" width="520" height="180"></canvas></div>
+        <div class="mini-chart"><div class="chart-head"><h3>P95</h3><button type="button" class="icon-btn" data-download="chartP95">PNG</button></div><canvas id="chartP95" width="520" height="180"></canvas></div>
+        <div class="mini-chart"><div class="chart-head"><h3>Average</h3><button type="button" class="icon-btn" data-download="chartAvg">PNG</button></div><canvas id="chartAvg" width="520" height="180"></canvas></div>
+        <div class="mini-chart"><div class="chart-head"><h3>Errores</h3><button type="button" class="icon-btn" data-download="chartErrors">PNG</button></div><canvas id="chartErrors" width="520" height="180"></canvas></div>
+        <div class="mini-chart"><div class="chart-head"><h3>CPU</h3><button type="button" class="icon-btn" data-download="chartCpu">PNG</button></div><canvas id="chartCpu" width="520" height="180"></canvas></div>
+        <div class="mini-chart"><div class="chart-head"><h3>Memoria</h3><button type="button" class="icon-btn" data-download="chartMemory">PNG</button></div><canvas id="chartMemory" width="520" height="180"></canvas></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="table-head">
+        <h2>Requests por endpoint</h2>
+        <label>Filas
+          <select data-page-size="valuesTable">
+            <option selected>25</option>
+            <option>50</option>
+            <option>100</option>
+          </select>
+        </label>
+      </div>
+      <div id="valuesTable" class="empty">Sin datos.</div>
+    </section>
+
+    <section class="panel">
+      <div class="table-head">
+        <h2>Errores detectados</h2>
+        <label>Filas
+          <select data-page-size="errorsTable">
+            <option selected>25</option>
+            <option>50</option>
+            <option>100</option>
+          </select>
+        </label>
+      </div>
+      <div id="errorsTable" class="empty">Sin datos.</div>
+    </section>
+
+    <section class="panel">
+      <div class="table-head">
+        <h2>Endpoints mas lentos</h2>
+        <label>Filas
+          <select data-page-size="slowTable">
+            <option selected>25</option>
+            <option>50</option>
+            <option>100</option>
+          </select>
+        </label>
+      </div>
+      <div id="slowTable" class="empty">Sin datos.</div>
+    </section>
+  </main>
+  <footer>RelampoTickets - app de practica para correlacion en pruebas de rendimiento</footer>
+  <script src="assets/analyzer.js?v=20260826-1518-honest-tooltip"></script>
+</body>
+</html>
