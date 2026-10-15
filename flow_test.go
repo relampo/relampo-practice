@@ -298,11 +298,26 @@ func TestTokenTransforms(t *testing.T) {
 }
 
 func TestCredentials(t *testing.T) {
-	if !checkCredentials("user001", "Pass001!") || !checkCredentials("user250", "Pass250!") ||
-		!checkCredentials("user500", "Pass500!") {
-		t.Fatal("credenciales válidas rechazadas")
+	if len(users) != 2500 {
+		t.Fatalf("got %d users, want 2500", len(users))
 	}
-	if checkCredentials("user501", "Pass501!") || checkCredentials("user001", "Pass002!") {
-		t.Fatal("credenciales inválidas aceptadas")
+	for _, account := range []struct{ username, password string }{
+		{"user001", "Pass001!"}, {"user250", "Pass250!"},
+		{"user500", "Pass500!"}, {"user501", "Pass501!"},
+		{"user999", "Pass999!"}, {"user1000", "Pass1000!"},
+		{"user2499", "Pass2499!"}, {"user2500", "Pass2500!"},
+	} {
+		if !checkCredentials(account.username, account.password) {
+			t.Errorf("valid account rejected: %s", account.username)
+		}
+	}
+	for _, account := range []struct{ username, password string }{
+		{"user2501", "Pass2501!"}, {"user000", "Pass000!"},
+		{"user001", "Pass002!"}, {"user2500", "Pass2499!"},
+		{"user0001", "Pass001!"}, {"user1", "Pass001!"},
+	} {
+		if checkCredentials(account.username, account.password) {
+			t.Errorf("invalid account accepted: %s", account.username)
+		}
 	}
 }

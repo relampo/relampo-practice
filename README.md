@@ -5,7 +5,7 @@ Simula una venta de entradas para eventos con un gateway de pago interno (Relamp
 diseñada para grabarse con el recorder MITM de Relampo y scriptearse en cualquier
 herramienta de carga (Relampo, JMeter, k6, Gatling, LoadRunner).
 
-Un solo binario Go, **sin base de datos ni dependencias externas**: 500 usuarios
+Un solo binario Go, **sin base de datos ni dependencias externas**: 2500 usuarios
 hardcodeados, estado en memoria con TTL, todo el JavaScript servido desde la misma app
 (cero CDNs — funciona sin internet y el MITM captura el 100% del tráfico).
 
@@ -40,9 +40,9 @@ docker run -p 8080:8080 relampo-tickets
 
 ## Usuarios
 
-500 usuarios generados en código: `user001`…`user500` con contraseña `Pass001!`…`Pass500!`.
+2500 usuarios generados en código: `user001`…`user2500` con contraseña `Pass001!`…`Pass2500!`.
 El patrón es predecible a propósito: el data pool CSV se arma a mano en un minuto
-(o con un one-liner: `for i in $(seq -w 1 500); do echo "user$i,Pass$i!"; done`).
+(o con un one-liner: `for i in $(seq 1 2500); do printf 'user%03d,Pass%03d!\n' "$i" "$i"; done`).
 Las credenciales no se muestran en ninguna pantalla de la app.
 
 ## Cookies

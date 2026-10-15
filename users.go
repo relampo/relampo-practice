@@ -4,9 +4,9 @@ import (
 	"fmt"
 )
 
-// 500 hardcoded users, generated deterministically at startup — no database.
-// user001/Pass001! … user500/Pass500!
-const userCount = 500
+// 2500 hardcoded users, generated deterministically at startup — no database.
+// user001/Pass001! … user2500/Pass2500!
+const userCount = 2500
 
 var users = buildUsers()
 
