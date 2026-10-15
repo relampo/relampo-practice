@@ -335,7 +335,7 @@ func (app *App) apiAuth(w http.ResponseWriter, r *http.Request) {
 	if !checkCredentials(creds.Username, creds.Password) {
 		writeErr(w, r, http.StatusUnauthorized, "credentials",
 			"invalid username or password",
-			"valid users: user001…user500 with Pass001!…Pass500!")
+			fmt.Sprintf("valid users: user001…user%03d with Pass001!…Pass%03d!", userCount, userCount))
 		return
 	}
 	bearer := issueJWT(creds.Username, bearerTTL)
